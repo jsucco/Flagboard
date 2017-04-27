@@ -1,0 +1,76 @@
+﻿
+@{
+    ViewBag.Title = "MobileEditor";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>MobileEditor</h2>
+
+<div class="jumbotron" style="height:3600px;">
+    <div style="position:absolute; z-index:1000; left:30px; top:80px;">
+        <button id="back" type="button" onclick="window.location.href='@Url.Action("Index", "Home", new { CID = Model.CID })';" class="animatedButton" style="margin-top:20%; color:white; height:70px; background-color:#4e9bda;">Back</button>
+    </div> 
+
+    @using (Html.BeginForm("MobileEditor", "Home"))
+    {
+        <div class="inputs" style="position:absolute; left:30px; width:90%; top:80px; margin-top: 110px;">
+            @{ int i = 0;}
+            @if (Model != null && Model.inputs != null)
+            {
+                foreach (var item in Model.inputs)
+                {
+                    if (item.InputType == "SELECT")
+                    {
+                        <div style="margin-top:20px; margin-bottom:20px;">
+                            <label style="color:black; font-size:large; margin-top:15px;">@item.placeHolder:</label> 
+                            <select class="input" id="@item.input.id" name="@("[" + i + "].value")">
+                                @if (Model.MS_Id == 0) {  
+                                    <option value="" disabled selected>@item.placeHolder</option>
+                                }
+                                @foreach (var option in @item.input.options)
+                                {
+                                    if (option.value == item.input.value)
+                                    {
+                                        <option selected value="@option.value">@option.text</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@option.value">@option.text</option>
+                                    }
+
+                                }
+                            </select> 
+                            <input type="hidden" name="@("[" + i + "].id")" value="@item.input.id" />
+                        </div>
+                       
+                    } else if (item.InputType == "DEFAULT")
+                    {
+                        <div style="margin-top:20px; margin-bottom:20px;"?>
+                            <label style="color:black; font-size:large; margin-top:15px;">@item.placeHolder:</label>
+                            <input class="input" id="@item.input.id" name="@("[" + i + "].value")" type="@item.function" value="@item.input.value"/>
+                            <input type="hidden" name="@("[" + i + "].id")" value="@item.input.id" />
+                        </div>
+                    }
+                    i++;
+                }
+                if (@Model.inputs[0].errorFlag == true)
+                {
+                    <label style="color:rgba(243, 49, 49, 0.92); font-size:large; font-style: italic; margin-top:20px;">@Model.inputs[0].errorMessage</label>
+                }
+            }
+            @if (Model != null && Model.hiddenInputs != null) {
+                foreach (var item in Model.hiddenInputs)
+                {
+                    <input type="hidden" id="@item.id" name="@("[" + i + "].value")" value="@item.value" />
+                    <input type="hidden" name="@("[" + i + "].id")" value="@item.id" />
+                }
+            }
+            <input type="hidden" name="MSID" value="@Model.MS_Id" />
+            <input type="hidden" name="CID" value="@Model.CID" />
+            <button id="Submit" class="animatedButton" name="method" value="submit" style="position:relative; float:right; top:60px; height:100px; color:white; background-color:#9a9898; right:-20px;" type="submit">Submit</button>
+            @if (Model.MS_Id > 0 && Model.canDelete == true) { 
+                <button id="Delete" class="animatedButton" name="method" value="delete" style="position:relative; float:right; top:60px; height:100px; color:white; background-color:#9a9898; right:-20px;" type="submit">Delete</button>
+            }
+        </div>
+    }
+</div>

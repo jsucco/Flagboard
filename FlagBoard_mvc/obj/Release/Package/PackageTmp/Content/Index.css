@@ -1,0 +1,27 @@
+﻿.ui-jqgrid .ui-jqgrid-htable th div {
+    overflow: hidden;
+    position: relative;
+    height: 37px;
+    margin-top: 10px;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.ui-jqgrid tr.jqgrow {
+    outline-style: none;
+    height: 45px;
+    font-size: 15px;
+}
+
+.Buttonholder { 
+    height: 80px; 
+    border:2px; 
+    background-color: #E0E0E0;
+}
+
+.MaintenanceButton { 
+    width: 110px; 
+    height: 40px;
+    font-size: small; 
+    color:white;
+}

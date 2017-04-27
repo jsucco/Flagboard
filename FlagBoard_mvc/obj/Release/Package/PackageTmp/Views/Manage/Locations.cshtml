@@ -1,0 +1,62 @@
+﻿
+@{
+    ViewBag.Title = "Locations";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Locations</h2>
+
+<div class="jumbotron">
+    <div style="position:absolute; z-index:1000; left:30px; top:80px;">
+        <button id="back" type="button" onclick="window.location.href='@Url.Action("Index", "Home", new { CID = Model.CID, MFBID = Model.MFB_Id })';" class="animatedButton" style="margin-top:20%; color:white; height:70px; background-color:#4e9bda;">Back</button>
+    </div>
+
+    @using (Html.BeginForm("Locations", "Manage"))
+    {
+        <div class="inputs" style="position:absolute; width:90%; left:30px; top:80px; margin-top: 110px;">
+            @{ int i = 0;}
+            @if (Model != null && Model.inputs != null)
+            {
+                foreach (var item in Model.inputs)
+                {
+                    if (item.InputType == "SELECT")
+                    {
+                        <div style="margin-top:20px; width:90%; margin-bottom:20px;">
+                            <select class="input" id="@item.input.id" name="@("[" + i + "].value")">
+                                <option value="" disabled selected>@item.placeHolder</option>
+                                @foreach (var option in @item.input.options)
+                                {
+                                    <option value="@option.value">@option.text</option>
+                                }
+                            </select>
+                            <input class="input" type="hidden" id="@item.input.id" name="@("[" + i + "].id")" value="@item.input.id" />
+                        </div>
+                        
+                    }
+                    else if (item.InputType == "DEFAULT")
+                    {
+                        <div style="margin-top:20px; margin-bottom:20px;" ?>
+                            <input class="input" id="@item.input.id" name="@("[" + i + "].value")" type="@item.function" />
+                            <input class="input" id="@item.input.id" name="@("[" + i + "].id")" value="@item.input.id" />
+                        </div>
+                    }
+                }
+                if (@Model.inputs[i].errorFlag == true)
+                {
+                    <label style="color:rgba(243, 49, 49, 0.92); font-size:large; font-style: italic; margin-top:20px;">@Model.inputs[i].errorMessage</label>
+                }
+                i++;
+            }
+            @if (Model != null && Model.hiddenInputs != null)
+            {
+                foreach (var item in Model.hiddenInputs)
+                {
+                    <input type="hidden" name="@("[" + i + "].value")" value=@item.value />
+                    <input type="hidden" name="@("[" + i + "].id")" value="@item.id" />
+                }
+            }
+         
+            <button id="GO" class="animatedButton" style="position:relative; float:right; top:60px; height:100px; color:white; background-color:#9a9898; right:-20px;" type="submit">GO</button>
+        </div>
+    }
+</div>

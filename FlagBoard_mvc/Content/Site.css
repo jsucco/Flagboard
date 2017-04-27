@@ -1,0 +1,126 @@
+﻿body {
+    padding-top: 50px;
+    padding-bottom: 20px;
+}
+
+/* Set padding to keep content from hitting the edges */
+.body-content {
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+/* Override the default bootstrap behavior where horizontal description lists 
+   will truncate terms that are too long to fit in the left column 
+*/
+.dl-horizontal dt {
+    white-space: normal;
+}
+
+/* Set width on the form input elements since they're 100% wide by default */
+input,
+select,
+textarea {
+    max-width: 280px;
+}
+
+.button { 
+    outline:none;
+    height: 120px; 
+    width: 270px; 
+    color:white;
+    font-weight:800;
+    border-radius: 10px;
+    box-shadow: 0 9px #999;
+    background-color:darkgray;
+}
+.button:hover {background-color: #3e8e41}
+
+.button:active {
+    background-color: #3e8e41;
+    box-shadow: 0 5px #666;
+    transform: translateY(4px);
+}
+.inputs {
+        position: absolute;
+        left: 15%;
+        width: 50%;
+        top: 20%;
+    }
+
+    .input {
+        width: 100% !important;
+        max-width: 2000px !important;
+        border-radius: 13px;
+        height: 90px;
+        outline: none;
+        margin-top: 45px;
+        border-color: rgba(171, 159, 159, 0.74);
+    }
+    .animatedButton{
+    font-family: Arial, sans-serif;
+    text-decoration: none !important;
+    background-color:#a30e12;
+    padding-left: 40px;
+    padding-right: 40px;
+    height: 38px;
+    line-height: 38px !important;
+    display: inline-block;
+    border: 1px solid #450003;
+    text-shadow:0px 1px 1px #000;
+    -webkit-box-shadow: inset 0px 1px 1px #fff, 0 1px 0px 0px #000;
+    -moz-box-shadow: inset 0px 1px 1px #fff, 0 1px 0px 0px #000;
+    box-shadow: inset 0px 1px 1px #fff, 0 1px 0px 0px #000;
+    outline:none;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+
+    -webkit-transition: all 0.2s linear;
+    -moz-transition: all 0.2s linear;
+    -o-transition: all 0.2s linear;
+    font-size: 35px;
+    }
+    .animatedButton:hover{
+    background-color:#880408;
+    height:75px;
+    color:darkgrey !important;
+    -webkit-box-shadow: inset 0px 1px 1px #000, 0 0px 0px 0px #000;
+    -moz-box-shadow: inset 0px 1px 1px #000, 0 0px 0px 0px #000;
+    box-shadow: inset 0px 1px 1px #000, 0 0px 0px 0px #000;
+    }
+
+    .export {
+        display: block;
+        font-size: 1.1em;
+        font-weight: 300;
+        text-transform: uppercase !important;
+        color: #FFF !important;
+        background-color: #555 !important;
+        background: -webkit-linear-gradient(#888, #555) !important;
+        background: linear-gradient(#888, #555) !important;
+        border: 0 none;
+        cursor: pointer;
+        -webkit-transition: all 150ms ease;
+        width: 150px;
+        height: 50px;
+        outline: none;
+        line-height: 1.8;
+        box-shadow: none;
+        border-radius: 0;
+    }
+
+    .change {
+        display: block;
+        font-size: .8em;
+        font-weight: 300;
+        text-transform: uppercase !important;
+        color: #FFF !important;
+        background-color: #FFFFFF !important;
+        background: linear-gradient(#C6C6C6, #BCBCBC) !important;
+        border: 0 none;
+    }
+
+    .export:hover, .export:focus {
+        -webkit-animation: pulsate 1.2s linear infinite;
+        animation: pulsate 1.2s linear infinite;
+    }
