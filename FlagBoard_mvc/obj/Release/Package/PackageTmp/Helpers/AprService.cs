@@ -6,7 +6,7 @@ using FlagBoard_mvc.Models.EF;
 
 namespace FlagBoard_mvc.Helpers
 {
-    public class AprService
+    public class AprService : AprMangCache
     {
         private AprManagerContext context { get; set; }
         public AprService(AprManagerContext _context = null)
@@ -40,8 +40,8 @@ namespace FlagBoard_mvc.Helpers
                 {
                     foreach (var item in activeList)
                     {
-                        if (item.CID != null && item.CID.Trim().Length > 5)
-                            list.Add(item.CID.Trim(), item);
+                        if (item.CtxCID != null && item.CtxCID.Trim().Length > 5)
+                            list.Add(item.CtxCID.Trim(), item);
                     }
                         
                 }
@@ -55,6 +55,33 @@ namespace FlagBoard_mvc.Helpers
                 context.Dispose();
             }
             return list; 
+        }
+
+        public string[] getAdminUserNames()
+        {
+            try
+            {
+                using (var db = new AprManagerContext())
+                {
+                    return (from x in db.EmailMasters
+                            where x.ADMIN == true
+                            select x.Address).ToArray();
+                }
+            } catch (Exception ex)
+            {
+                Elmah.ErrorSignal.FromCurrentContext().Raise(ex); 
+            }
+            return new string[] { "" }; 
+        }
+
+        public string[] getCachedAdminUserNames()
+        {
+            var un = getCacheitem("AdminUsernames"); 
+
+            if (un != null) {
+                return (string[])un; 
+            }
+            return null; 
         }
     }
 }

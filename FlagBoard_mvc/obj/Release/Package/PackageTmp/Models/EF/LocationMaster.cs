@@ -1,10 +1,7 @@
 namespace FlagBoard_mvc.Models.EF
 {
-    using System;
-    using System.Collections.Generic;
     using System.ComponentModel.DataAnnotations;
     using System.ComponentModel.DataAnnotations.Schema;
-    using System.Data.Entity.Spatial;
 
     [Table("LocationMaster")]
     public partial class LocationMaster
@@ -36,5 +33,7 @@ namespace FlagBoard_mvc.Models.EF
         [StringLength(50)]
         public string AS400_Abr { get; set; }
 
+        [StringLength(10)]
+        public string CtxCID { get; set; }
     }
 }

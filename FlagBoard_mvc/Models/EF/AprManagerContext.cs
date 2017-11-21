@@ -1,9 +1,6 @@
 namespace FlagBoard_mvc.Models.EF
 {
-    using System;
     using System.Data.Entity;
-    using System.ComponentModel.DataAnnotations.Schema;
-    using System.Linq;
 
     public partial class AprManagerContext : DbContext
     {
@@ -13,6 +10,7 @@ namespace FlagBoard_mvc.Models.EF
         }
 
         public virtual DbSet<LocationMaster> LocationMasters { get; set; }
+        public virtual DbSet<EmailMaster> EmailMasters { get; set; }
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
@@ -35,6 +33,15 @@ namespace FlagBoard_mvc.Models.EF
             modelBuilder.Entity<LocationMaster>()
                 .Property(e => e.ConnectionString)
                 .IsFixedLength();
+
+            modelBuilder.Entity<LocationMaster>()
+                .Property(e => e.CtxCID)
+                .IsFixedLength();
+
+            modelBuilder.Entity<EmailMaster>()
+               .Property(e => e.HomeLocation)
+               .IsFixedLength()
+               .IsUnicode(false);
         }
     }
 }

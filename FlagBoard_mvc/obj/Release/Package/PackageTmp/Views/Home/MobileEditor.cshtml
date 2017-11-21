@@ -6,7 +6,7 @@
 
 <h2>MobileEditor</h2>
 
-<div class="jumbotron" style="height:3600px;">
+<div class="jumbotron" style="height:4600px;">
     <div style="position:absolute; z-index:1000; left:30px; top:80px;">
         <button id="back" type="button" onclick="window.location.href='@Url.Action("Index", "Home", new { CID = Model.CID })';" class="animatedButton" style="margin-top:20%; color:white; height:70px; background-color:#4e9bda;">Back</button>
     </div> 
@@ -45,9 +45,32 @@
                        
                     } else if (item.InputType == "DEFAULT")
                     {
-                        <div style="margin-top:20px; margin-bottom:20px;"?>
+                        <div style="margin-top:20px; margin-bottom:20px;">
                             <label style="color:black; font-size:large; margin-top:15px;">@item.placeHolder:</label>
                             <input class="input" id="@item.input.id" name="@("[" + i + "].value")" type="@item.function" value="@item.input.value"/>
+                            <input type="hidden" name="@("[" + i + "].id")" value="@item.input.id" />
+                        </div>
+                    } else if (item.InputType == "TIMER")
+                    {
+                        <div style="margin-top: 10px; margin-bottom: 20px;">
+                            <label style="color:black; font-size:large; margin-top:15px;">@item.placeHolder</label>
+                            <div style="Z-INDEX: 105; width: 100%; height:130px; margin-top:10px;">
+                                <div style="height:auto; width:100%;">
+                                    <button id="@(item.input.id)_start" style="margin-top:10px;" class="input timer_button">START</button>
+                                    <button id="@(item.input.id)_stop" style="margin-top:10px; display:none;" class="input timer_button">STOP</button>
+                                </div>
+                                <div style="display:grid; width:150px;">
+                                    <div style="grid-column: 1 / 2; grid-row: 1;">
+                                        <label id="@(item.input.id)_timerlabel" style="font-size:medium;" class="timer_label">0:00</label>
+                                        <input type="hidden" min="0" id="@item.input.id" name="number-2" value=5 style="width: 55px; height: 37px; position:relative; top: -3px; text-decoration:underline;" class="inputelement" />
+                                    </div>
+                                    <div style="grid-column: 2 / 2; grid-row: 1;">
+                                        <img id="timer_clock_gif" style="width:40px; display:none;" src="~/Content/Images/clock.gif" />
+                                    </div>
+                                </div>
+                               
+                            </div>
+                            <input id="@item.input.id" name="@("[" + i + "].value")" type="hidden" value="@item.input.value" />
                             <input type="hidden" name="@("[" + i + "].id")" value="@item.input.id" />
                         </div>
                     }
@@ -67,10 +90,184 @@
             }
             <input type="hidden" name="MSID" value="@Model.MS_Id" />
             <input type="hidden" name="CID" value="@Model.CID" />
+            <input type="hidden" name="MMID" value="@Model.MM_Id" />
+
             <button id="Submit" class="animatedButton" name="method" value="submit" style="position:relative; float:right; top:60px; height:100px; color:white; background-color:#9a9898; right:-20px;" type="submit">Submit</button>
             @if (Model.MS_Id > 0 && Model.canDelete == true) { 
                 <button id="Delete" class="animatedButton" name="method" value="delete" style="position:relative; float:right; top:60px; height:100px; color:white; background-color:#9a9898; right:-20px;" type="submit">Delete</button>
             }
         </div>
     }
+    <div style="position:relative; top:3700px;">
+        <div id="ActiveMachineImage1" style="display:none; LEFT: 0px; position:absolute; ">
+            @using (Html.BeginForm("MachineFileClick", "Home", FormMethod.Post))
+            {
+                <input type="hidden" name="CID" value="@Model.CID" />
+                <input type="hidden" name="MM_Idp" class="MM_Idp" value="@Model.MM_Id" />
+                <input type="hidden" name="number" value="1" />
+                <input id="MachineImage_Button" type="submit" class="export machinefile" style="width: 230px; height: 35px; cursor:pointer;" value="MachineFile1" />
+            }
+
+        </div>
+        <div id="ActiveMachineImage2" style="display:none; LEFT: 0px; top:100px; position:absolute;">
+            @using (Html.BeginForm("MachineFileClick", "Home", FormMethod.Post))
+            {
+                <input type="hidden" name="CID" value="@Model.CID" />
+                <input type="hidden" name="MM_Idp" class="MM_Idp" value="@Model.MM_Id" />
+                <input type="hidden" name="number" value="2" />
+                <input id="MachineImage_Button" type="submit" class="export machinefile" style="width: 230px; height: 35px; cursor:pointer;" value="MachineFile2" />
+            }
+        </div>
+        <div id="ActiveMachineImage3" style="display:none; LEFT: 0px; top:200px; position:absolute;">
+            @using (Html.BeginForm("MachineFileClick", "Home", FormMethod.Post))
+            {
+                <input type="hidden" name="CID" value="@Model.CID" />
+                <input type="hidden" name="MM_Idp" class="MM_Idp" value="@Model.MM_Id" />
+                <input type="hidden" name="number" value="3" />
+                <input id="MachineImage_Button" type="submit" class="export machinefile" style="width: 230px; height: 35px; cursor:pointer;" value="MachineFile3" />
+            }
+        </div>
+        <div id="ActiveMachineImage4" style="display:none; LEFT: 0px; top:300px; position:absolute;">
+            @using (Html.BeginForm("MachineFileClick", "Home", FormMethod.Post))
+            {
+                <input type="hidden" name="CID" value="@Model.CID" />
+                <input type="hidden" name="MM_Idp" class="MM_Idp" value="@Model.MM_Id" />
+                <input type="hidden" name="number" value="4" />
+                <input id="MachineImage_Button" type="submit" class="export machinefile" style="width: 230px; height: 35px; cursor:pointer;" value="MachineFile4" />
+            }
+        </div>
+    </div>
 </div>
+<script type="text/javascript" src="~/Scripts/jquery-1.11.1.min.js"></script>
+<script type="text/javascript">
+    var TimerId = 0; 
+    var ms_id = 0; 
+    var machines = new Array(); 
+
+    $(function () {
+        ms_id = @Model.MS_Id;
+        mm_id = @Model.MM_Id; 
+        machines = @Html.Raw(Json.Encode(Model.machines)); 
+
+        if (ms_id == 0) { 
+            $("#MS_Total_Machine_Downtime_start").attr('disabled', 'disabled'); 
+            $("#MS_Total_Machine_Downtime_stop").attr('disabled', 'disabled'); 
+        } else { 
+            timer.handler(ms_id, "GET", true); 
+            displayMachineFiles(mm_id); 
+        }
+
+        $(".timer_button").click(function (e) {
+            e.preventDefault();
+            var action = e.currentTarget.id;
+            
+            switch (action) {
+                case 'MS_Total_Machine_Downtime_start':
+                    timer.handler(ms_id, 'START', false);
+                    break;
+                case 'MS_Total_Machine_Downtime_stop':
+                    timer.handler(ms_id, 'STOP', false);
+                    break;
+            }
+                     
+            return false;
+        });
+
+        $("#MS_Main_Comp_Date").on("change", function(e) { 
+            $("#MS_Main_Comp_Date").val($(this).is(':checked'));
+        });
+
+        $("#MS_Total_Machine_Downtime_start").click(function (e) { 
+            e.preventDefault(); 
+        });
+    });
+    var timer = { 
+        handler: function(msid_, action_, isStart) { 
+            $.ajax({
+                url: '/Home/timer',
+                type: 'POST',
+                data: { ms_id: msid_, cid: "@Model.CID", action: action_ },
+                success: function (data) {
+                    console.log("timer", data);
+                    var s_arr = data.TimerContent.toString().split('/');
+                    if (action_ == 'START' && data.TimerContent == 'STARTED') {
+                        timer.start(); 
+                        timer.RefreshTimerLabel();  
+                    } else if (action_ == 'STOP' && s_arr[1] == 'STOPPED') {
+                        timer.stop(); 
+                        window.clearInterval(TimerId); 
+                        TimerId = 0; 
+                    } else if (action_ == 'GET' && data != 'ERR' && data.length != 0) {
+                        
+                        if (s_arr.length == 2) { 
+                            console.log("isStart", isStart); 
+                            $("#MS_Total_Machine_Downtime_timerlabel").text(s_arr[0]);
+                            if (s_arr[1].toString().trim() == 'true') {
+                                timer.start(); 
+                                if (isStart == true)
+                                    timer.RefreshTimerLabel(); 
+                            } else { 
+                                timer.stop();   
+                            }
+                        } else { 
+                            alert('timer parse error.');
+
+                        }
+                    }
+                },
+                error: function (data) {
+                    alert(data);
+                }
+            });
+        }, 
+        stop: function() { 
+            $("#MS_Total_Machine_Downtime_stop").fadeOut(50);
+            $("#MS_Total_Machine_Downtime_start").fadeIn(50);
+            $("#MS_Total_Machine_Downtime_start").attr('disabled', 'disabled');
+            $("#MS_Total_Machine_Downtime_timerlabel").css("text-decoration", "underline"); 
+            $("#timer_clock_gif").css('display', 'none'); 
+            setTimeout(function () {
+                $("#MS_Total_Machine_Downtime_start").attr('disabled', false);
+            }, 2000);
+        }, 
+        start: function() { 
+            $("#MS_Total_Machine_Downtime_start").fadeOut(50);
+            $("#MS_Total_Machine_Downtime_stop").fadeIn(50);
+            $("#MS_Total_Machine_Downtime_stop").attr('disabled', 'disabled');
+            $("#MS_Total_Machine_Downtime_timerlabel").css("text-decoration", "none"); 
+            $("#timer_clock_gif").css('display', 'block');
+
+            setTimeout(function () {
+                $("#MS_Total_Machine_Downtime_stop").attr('disabled', false);
+            }, 2000);
+        }, 
+        RefreshTimerLabel: function() { 
+            if (ms_id != 0) { 
+                TimerId = setInterval(function(e) { 
+                    console.log("timer_label_refresh", ms_id); 
+                    timer.handler(ms_id, "GET", false); 
+                }, 32000); 
+            }      
+        }
+    };
+
+    function displayMachineFiles(SelMM_Id) { 
+        $.each(machines, function(key, value) {
+            if (value.MM_Id == SelMM_Id) {
+                if (value.Mach_Filename1 != null && value.Mach_Filename1.length > 0) {
+                    $("#ActiveMachineImage1").css("display", "block");
+                }
+                if (value.Mach_Filename2 != null && value.Mach_Filename2.length > 0) {
+                    $("#ActiveMachineImage2").css("display", "block");
+                }
+                if (value.Mach_Filename3 != null && value.Mach_Filename3.length > 0) {
+                    $("#ActiveMachineImage3").css("display", "block");
+                }
+                if (value.Mach_Filename4 != null && value.Mach_Filename4.length > 0) {
+                    $("#ActiveMachineImage4").css("display", "block");
+                }
+            }
+        });
+    }
+
+</script>

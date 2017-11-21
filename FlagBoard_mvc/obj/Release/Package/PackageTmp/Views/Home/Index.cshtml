@@ -2,8 +2,7 @@
     ViewBag.Title = "APR";
 }
 
-<h2>Maintenance FlagBoard @Model.MFB_label - @Model.Location.CorporateName</h2>
-
+<h2>FlagBoard @Model.MFB_label - @Model.Location.CorporateName</h2>
 <div class="jumbotron" style="position:relative; top:-10px;">
 
     <div class="ButtonHolder" style="position:relative; top:10px; float:left; width: 95%;">
@@ -13,22 +12,23 @@
             <label for="lastRefreshLabel" style="font-size:x-small;">Updated: </label>
             <input id="lastRefresh" style="border:none; background-color:transparent; font-size:x-small;" value="NA" />
         </div>
-        <div style="Z-INDEX: 105; font-size:medium; POSITION: absolute; right:10px; TOP: -20px;">
+        <div style="Z-INDEX: 100; font-size:medium; POSITION: absolute; right:10px; TOP: -20px;">
             <input id="HideCompleted" name="hide" type="checkbox" style="font-weight:bold;" class="chkbox"  />Hide Completed
         </div>
-        
     </div>
     <div id="tablediv" style="width:95%; top:60px; position:relative;">
         <table id="records"></table>
         <div id="pager"></div>
     </div>
-    <div style="position:relative; top: 100px; width:auto;">
+    <div style="position:relative; top: 100px; width:auto; height:60px;">
         <input id="edit" name="edit" type="button" style="left: 0px; position:absolute; height: 40px; width:110px" class="export inputbox-opener" value="Edit" />
-        <input id="add" name="add" type="button" style="left: 150px; position:absolute; height: 40px; width:110px" class="export inputbox-opener" value="Add" />
+        <input id="add" name="add" type="button" style="left: 150px; position:absolute; height: 40px; width:110px" class="export inputbox-opener" value="Add" />      
         <input id="filter" type="button" name="filter" style="position:absolute; right:50px; height:40px; top:60px; width:110px; float:right;" class="export" value="Filter" />
     </div>
-    <input id="FBChange" onclick="window.location.href='@Url.Action("Flagboards", "Manage", new { CID = Model.CID })';" type="button" style="float:left; top: 160px; position: relative; height: 65px !important; width:110px;" class=change value="Change fb" />
-    <button id="LocationChange" onclick="window.location.href='@Url.Action("Locations", "Manage", new { CID = Model.CID })';" type="button" style="float:left; top: 160px; position: relative; height: 65px !important; width:110px; margin-top:85px; left:-110px; word-wrap:normal;" class=change value="" >Change <br /> location</button>
+    <div style="float:left; position:relative; top: 160px;" >
+        <input id="FBChange" onclick="window.location.href='@Url.Action("Flagboards", "Manage", new { CID = Model.CID })';" type="button" style="height: 65px !important; width:110px; left: 0px; position:absolute;" class=change value="Change fb" />
+        <button id="LocationChange" onclick="window.location.href='@Url.Action("Locations", "Manage", new { CID = Model.CID })';" type="button" style="height: 65px !important; width:110px; margin-top:25px; left:0px; word-wrap:normal; position:absolute; top: 100px;" class=change value="">Change <br /> location</button>
+    </div>
     <div id="inputbox" ondrop="drop(event)" ondragover="allowDrop(event)" title="Machine Maintenance Editor" style="z-index: 105; display: none; width:797px; left: 0px; top: 15px; height:405px !important; background-color: White; position:relative; border: none; border-radius: 0px;">
         <input id="MS_Id" type="hidden" name="number-1" value="0" class="inputelement"/>
         <label id="lblMachineName" style="Z-INDEX: 103; LEFT: 16px; POSITION: absolute; font-size:smaller; TOP: 34px"
@@ -75,7 +75,7 @@
         </div>
 
         <label id="lblCompletedBy" style="Z-INDEX: 106; font-size:smaller; LEFT: 16px; POSITION: absolute; TOP: 212px; font-weight:800"
-                    >Completed By</label>
+                    >Assigned To</label>
         <div style="Z-INDEX: 102; LEFT: 16px; POSITION: absolute; TOP: 227px">
 
             <input name="select-3" id="EMP_ID" style="width: 200px; height: 20px; " class="inputelement"/>
@@ -93,9 +93,25 @@
         </div>
 
         <label id="lblTotalMachineDowntime" style="Z-INDEX: 105; font-size:smaller; LEFT: 500px; POSITION: absolute; TOP: 104px; font-weight:800; width:119px;"
-                    >Machine Downtime (min)</label>
-        <div style="Z-INDEX: 105; LEFT: 500px; POSITION: absolute; TOP: 140px">
-            <input type="number" min="0" id="MS_Total_Machine_Downtime" name="number-2" value=5 style="width: 55px; height: 37px; position:relative; top: -3px;" class="inputelement" />
+                    >Machine Downtime</label>
+        <div style="Z-INDEX: 105; LEFT: 500px; POSITION: absolute; TOP: 140px; width: 60px;">
+            <div style="height:auto; width:100%;">
+                <button id="machine_downtime_start" style="background-color:rgba(30, 158, 30, 0.82); color:white;" class="timer_button">START</button>
+                <button id="machine_downtime_stop" style="background-color:rgb(230, 51, 51); color:white;" class="timer_button" style="display:none;">STOP</button>
+            </div>
+            <div style="display:grid;">
+                <div style="grid-column: 1 / 2; grid-row: 1;">
+                    <label id="machine_downtime_timerlabel" style="text-decoration: underline; font-size:medium;" class="timer_label">0:00</label>
+                </div>
+                <div style="grid-column: 2 / 2; grid-row: 1;">
+                    <img id="timer_clock_gif" style="width:25px; display:none;" src="~/Content/Images/clock.gif" />
+                </div>
+                <div style="grid-column: 3 / 2; grid-row: 2; width: 160px; position: relative;left: -40px;top: -10px;">
+                    <label style="font-size:7px;" id="timer_usercontent"></label>
+                </div>
+            </div>
+                
+            <input type="hidden" min="0" id="MS_Total_Machine_Downtime" name="number-2" value=5 style="width: 55px; height: 37px; position:relative; top: -3px;" class="inputelement" />
         </div>
         <label id="lblTimeRequiredMinutes" style="Z-INDEX: 105; font-size:smaller; font-size:smaller; LEFT: 413px; POSITION: absolute; TOP: 18px; width:90px"
                     >Minutes Required</label>
@@ -171,70 +187,26 @@
         <label id="lblRow" style="Z-INDEX: 105; font-size:medium; LEFT: 620px; POSITION: absolute; TOP: 95px; font-weight:800; width:88px;"
                     >Machine Number</label>
         <div style="Z-INDEX: 104; LEFT: 715px;  border:0px; background:transparent; POSITION: absolute; TOP: 98px">
-            <input type="text" id="MM_Number" name="text-5" value=50 style="font-size:x-large; width:90px; border:none; font-weight:bold;" class="inputelement" />
+            <input type="text" id="MM_Number" readonly name="text-5" value=50 style="font-size:x-large; outline:none; width:90px; border:none; font-weight:bold;" class="inputelement" />
         </div>
         <div style="Z-INDEX: 105; font-size:medium; LEFT: 620px; POSITION: absolute; TOP: 155px">
             <input id="MS_Main_Comp_Date" type="checkbox" name="check-1" style="font-weight:bold;" class="chkbox inputelement" value="checked" />WorkOrder Completed
         </div>
-        <textarea id="TranValue" type="text" style="Z-INDEX: 104; LEFT: 570px; font-size:small; font-weight:bold; border:0px; background:transparent; POSITION: absolute; TOP: 128px; width:200px; height:90px;"
-                     tabindex="18"></textarea>
+        @*<textarea id="TranValue" type="text" style="Z-INDEX: 104; LEFT: 570px; font-size:small; font-weight:bold; border:0px; background:transparent; POSITION: absolute; TOP: 128px; width:200px; height:90px;"
+                     tabindex="18"></textarea>*@
 
     </div>
     <input type="hidden" id="MMID_Hidden" value="0"  />
     <input type="hidden" id="FileImageStatusArray" value="0"  />
 </div>
 
-@*@Scripts.Render("~/bundles/jqgrid")*@
-<link href="../Content/select2.css" rel="stylesheet" />
 <link href="http://cdn.wijmo.com/themes/arctic/jquery-wijmo.css" rel="stylesheet" type="text/css" />
 
-<link href="http://cdn.wijmo.com/jquery.wijmo-pro.all.3.20141.34.min.css" rel="stylesheet" type="text/css" />
+@Styles.Render("~/Content/fb_index_style")
 
+@Scripts.Render("~/bundles/jquery")
+@Scripts.Render("~/bundles/fb_index")
 
-<link href="~/Content/ui.jqgrid.css" rel="stylesheet" type="text/css" />
-<link href="~/Content/Index.css" rel="stylesheet" type="text/css"/> 
-<script src="http://code.jquery.com/jquery-1.11.1.min.js" type="text/javascript"></script>
-<script src="http://code.jquery.com/ui/1.11.0/jquery-ui.min.js" type="text/javascript"></script>
-
-<script src="~/Scripts/grid.locale-en.js" type="text/javascript"></script>
-<script src="../Scripts/select2.js"></script>
-<script src="~/Scripts/jquery.jqGrid.min.js" type="text/javascript"></script>
-
-<script src="http://cdn.wijmo.com/jquery.wijmo-open.all.3.20141.34.min.js" type="text/javascript"></script>
-<script src="http://cdn.wijmo.com/jquery.wijmo-pro.all.3.20141.34.min.js" type="text/javascript"></script>
-<script src="http://cdn.wijmo.com/interop/wijmo.data.ajax.3.20141.34.js" type="text/javascript"></script>
-<style type="text/css">
-    .ui-jqgrid tr.jqgrow td {
-        font-weight: normal;
-        overflow: hidden;
-        white-space: pre;
-        height: 22px;
-        padding: 0 2px 0 2px;
-        border-bottom-width: 1px;
-        border-bottom-color: inherit;
-        border-bottom-style: solid;
-        /*word-wrap: break-word;*/
-        /*white-space: pre-wrap;*/
-        /*white-space: -moz-pre-wrap;
-        white-space: -pre-wrap;
-        white-space: -o-pre-wrap;*/
-        overflow: hidden;
-        height: auto;
-        vertical-align: middle;
-        padding-top: 3px;
-        padding-bottom: 3px;
-    }
-    .select2-results {
-        max-height: 290px;
-        height: 300px;
-        padding: 0 0 0 4px;
-        margin: 4px 4px 4px 0;
-        position: relative;
-        overflow-x: hidden;
-        overflow-y: auto;
-        -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
-    }
-</style>
 <script type="text/javascript">
     var machines = new Array();
     var employees = new Array();
@@ -243,6 +215,7 @@
     var refreshFlag = true;
     var CID = @Html.Raw(Json.Encode(Model.CID));
     var isMobile = "False";
+    var ActiveTimers = new Array();
     $(function () {
         var records = @Html.Raw(Json.Encode(Model.schedule));
         machines = @Html.Raw(Json.Encode(Model.machines));
@@ -252,7 +225,8 @@
         grid.Selected_MS_Maint_Code = @Html.Raw(Json.Encode(Model.MS_Maint_Code));
         grid.Selected_Flagboard = @Html.Raw(Json.Encode(Model.MFB_Id));
         isMobile = "@Model.isMobile";
-        console.log(@Html.Raw(Json.Encode(Model.CID)));
+        console.log(@Html.Raw(Json.Encode(Model.ActiveTimers)));
+        ActiveTimers = @Html.Raw(Json.Encode(Model.ActiveTimers));
         var allowableRows = Math.floor(Number(($(window).height() - 300)) / 45);
         if (allowableRows != null && allowableRows > 0)
             grid.rowsLimit = allowableRows;
@@ -260,7 +234,8 @@
         grid.setViewColors();
         grid.hidecompleted = false;
         inputBox.InitializeControls(machines, mtypes, employees, flagboards);
-
+        console.log(@Html.Raw(Json.Encode(Model.ticketname)));
+        console.log(@Html.Raw(Json.Encode(Model.canDelete)));
         grid.rowsLimit = allowableRows;
         var intervalId = setInterval(
                 function() {
@@ -278,39 +253,57 @@
             $("#Scheduled").css({"border-width":"5px", "border-color":"darkgray", "background":"rgba(236, 173, 58, 0.819608)"});
             $("#Unscheduled").css({"border-width": "1px", "border-color": "none", "background":"rgb(110, 149, 215)"});
             $("#records").jqGrid('hideCol', 'MS_WOCreate_Date');
-            $("#records").jqGrid('showCol', 'MS_Next_Main_Datetime'); 
+            $("#records").jqGrid('showCol', 'MS_Next_Main_Datetime');
         } else if (grid.Selected_MS_Maint_Code == '2') {
             $("#Unscheduled").css({"border-width": "5px", "border-color": "darkgray", "background":"rgba(236, 173, 58, 0.819608)"});
             $("#Scheduled").css({"border-width":"1px", "border-color":"none", "background":"rgb(110, 149, 215)"});
-            $("#records").jqGrid('showCol', 'MS_WOCreate_Date'); 
-            $("#records").jqGrid('hideCol', 'MS_Next_Main_Datetime'); 
+            $("#records").jqGrid('showCol', 'MS_WOCreate_Date');
+            $("#records").jqGrid('hideCol', 'MS_Next_Main_Datetime');
         }
 
         $(".inputbox-opener").click(function(e) {
             inputBox.method = e.currentTarget.id;
             if (inputBox.method == 'edit') {
-                functions.getLocalRow(grid.LastSelectedMSID).done(function(result) { 
-                    if (result != null) { 
+                functions.getLocalRow(grid.LastSelectedMSID).done(function(result) {
+ 
+                    if (result != null) {
+
                         $(".MM_Idp").val(result.MM_Id);
                         inputBox.displayMachineFiles(result.MM_Id);
+                        inputBox.SetEmployeeStatusLabel(result); 
+
                         if (isMobile == "True" && result.MS_Id > 0) {
-                            window.location.href= "/Home/MobileEditor?CID=" + CID + "&MSID=" + result.MS_Id;
+                            window.location.href= "/Home/MobileEditor?CID=" + CID + "&MSID=" + result.MS_Id + "&MMID=" + result.MM_Id;
                             //console.log("/Home/MobileEditor?CID=" + CID + "&MSID=" + localRow.MS_Id);
                             return;
                         }
+                        console.log(result);
+                        if (result.MS_Id > 0) {
+                            inputBox.Timer(result.MS_Id, "GET", true);
+                            if (result.MS_WOClosed_Timestamp.length > 0) {
+                                console.log($("#machine_downtime_start"));
+                                $("#machine_downtime_start").prop('disabled', true);
+                                $("#machine_downtime_start").attr('disabled', 'disabled');
+                            }
+                        }
                         inputBox.SetControlValues(result);
-                        $('#inputbox').wijdialog('open');
+                        setTimeout(function() {
+                            $('#inputbox').dialog('open');
+                        }, 60);
+
                     }
                 });
-                
             } else if (inputBox.method = 'add') {
                 if (isMobile == "True") {
                     window.location.href= "/Home/MobileEditor?CID=" + CID + "&MSID=0&MFBID=" + grid.Selected_Flagboard;
                     return false;
                 }
+                $("#lblCompletedBy").text("Assigned To");
                 inputBox.InitializeNewRecord();
-
-                $('#inputbox').wijdialog('open');
+                //$('#inputbox').wijdialog('open');
+                setTimeout(function() {
+                    $('#inputbox').dialog('open');
+                }, 60);
             }
             return false;
         });
@@ -332,6 +325,22 @@
             }
         });
 
+        $(".timer_button").click(function(e) {
+            var action = e.currentTarget.id;
+            if ($("#inputbox").is(":visible")) {
+                switch(action) {
+                    case 'machine_downtime_start':
+                        inputBox.Timer(grid.LastSelectedMSID, 'START', false);
+                        break;
+                    case 'machine_downtime_stop':
+                        inputBox.Timer(grid.LastSelectedMSID, 'STOP', false);
+                        break;
+                }
+            }
+            e.preventDefault();
+            return false;
+        });
+
         $(".machinefile").click(function(e) {
             window.location = "/Home/MachineFileClick?CID=" + CID + "&MM_Id=1&number=1";
         });
@@ -348,15 +357,16 @@
         hidecompleted: false,
         showfilter: Number(0),
         Selected_Flagboard: 0,
-        LastSelectedMSID: 0, 
+        LastSelectedMSID: 0,
         rowsLimit: 4,
         Init: function (records) {
             var pagewidth = screen.width - 50;
 
             $("#records").jqGrid({
                 datatype: 'local',
-                colNames: ['Machine Number', 'Name', 'MSID', 'BoardID', 'MTID', 'MT_MFB_Code2', 'CompletedBy', 'Reason', 'Closed', 'ClosedDate', 'Created', 'CreatedDate', 'Next_Main_Date', 'MaintType', 'WorkOrder', 'MS_Notes'],
+                colNames: ['Status', 'Machine Number', 'Name', 'MSID', 'BoardID', 'MTID', 'MT_MFB_Code2', 'Assigned To', 'Reason', 'Closed', 'ClosedDate', 'Created', 'CreatedDate', 'Next_Main_Date', 'MaintType', 'WorkOrder', 'MS_Notes'],
                 colModel: [
+                    { name: "actionBtn", width:70 },
                     { name: 'MM_Number', index: 'MM_Number', align: "center", width: 90, sorttype: "int" },
                     { name: 'MM_Name', index: 'MM_Name', width: 180, sorttype: "text", jsonmap: "MMName" },
                     { name: 'MS_Id', index: 'MS_Id', hidden: true, sortable: false },
@@ -380,8 +390,30 @@
 
                     grid.setViewColors();
                     $(".jumbotron").css('height', ($("#tablediv").height() + 460 ) + "px");
-                    var today = new Date(); 
-                    $("#lastRefresh").val((today.getMonth() + 1) + "/" + today.getDate() + "/" + today.getFullYear() + " " + today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds()); 
+                    var today = new Date();
+                    $("#lastRefresh").val((today.getMonth() + 1) + "/" + today.getDate() + "/" + today.getFullYear() + " " + today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds());
+
+
+                    var ids = $("#records").jqGrid('getDataIDs');
+                    for (var i = 0; i < ids.length; i++) {
+
+                        var rowid = ids[i];
+                        var MSIDCell = new Number($("#" + rowid).find("td[aria-describedby='records_MS_Id']").html());
+
+                        for (var j = 0; j < ActiveTimers.length; j++) {
+                            if (ActiveTimers[j].MS_Id == MSIDCell) {
+                                var html = '';
+                                if (ActiveTimers[j].value == true) {
+                                    html = '<div class="down-octagon" style="margin-left:15px;"></div>';
+                                } else {
+                                    html = '<div class="running-circle" style="margin-left:15px;"></div>';
+                                }
+                                $("#records").jqGrid('setRowData', rowid, {actionBtn: html});
+                            }
+                        }
+
+                        grid.IsRefreshing = false;
+                    }
                 },
                 rowNum: grid.rowsLimit,
                 caption: "schedule",
@@ -393,76 +425,99 @@
                 pager: "#pager",
                 gridview: true,
                 ondblClickRow: function (rowid, iCol, cellcontent, e) {
-                    
-                    var MSIDCell = $("#" + rowid).find("td[aria-describedby='records_MS_Id']").html(); 
-                    functions.getLocalRow(MSIDCell).done(function(result) { 
-                        if (result != null) { 
-                            grid.LastSelectedMSID = MSIDCell; 
+
+                    var MSIDCell = $("#" + rowid).find("td[aria-describedby='records_MS_Id']").html();
+                    functions.getLocalRow(MSIDCell).done(function(result) {
+                        if (result != null) {
+
+                            grid.LastSelectedMSID = MSIDCell;
                             $(".MM_Idp").val(result.MM_Id);
                             inputBox.displayMachineFiles(result.MM_Id);
+                            inputBox.SetEmployeeStatusLabel(result); 
+
                             if (isMobile == "True" && result.MS_Id > 0) {
-                                window.location.href= "/Home/MobileEditor?CID=" + CID + "&MSID=" + result.MS_Id;
+                                window.location.href= "/Home/MobileEditor?CID=" + CID + "&MSID=" + result.MS_Id + "&MMID=" + result.MM_Id;
                                 return;
+                            }
+                            if (result.MS_Id > 0) {
+                                inputBox.Timer(result.MS_Id, "GET", true);
                             }
 
                             inputBox.SetControlValues(result);
                             inputBox.method = "edit";
-                            $('#inputbox').wijdialog('open');
-                        } 
+                            //$('#inputbox').wijdialog('open');
+                            setTimeout(function() {
+                                $('#inputbox').dialog('open');
+                            }, 60);
+                        }
                     })
 
-                    
+
                 },
                 onPaging: function(pg) {
-        
+
                     var lastpage = $("#records").getGridParam('lastpage')
-                    console.log("pg", pg); 
-                    console.log(lastpage); 
-                    
+
                     switch (pg) {
-                        case 'next_pager': 
+                        case 'next_pager':
                             if (grid.SelectedPage < lastpage) {
                                 grid.SelectedPage = grid.SelectedPage + 1
                             }
                             break;
-                        case 'prev_pager': 
-                            if (grid.SelectedPage > 1) { 
+                        case 'prev_pager':
+                            if (grid.SelectedPage > 1) {
                                 grid.SelectedPage = grid.SelectedPage - 1
                             }
                             break;
-                        case 'last_pager': 
+                        case 'last_pager':
                             grid.SelectedPage = lastpage
                             break;
-                        case 'first_pager': 
+                        case 'first_pager':
                             grid.SelectedPage = 1
                             break;
                     }
                 },
                 onSelectRow: function(rowid) {
                     var MSIDCell = $("#" + rowid).find("td[aria-describedby='records_MS_Id']").html();
-                    functions.getLocalRow(MSIDCell).done(function(result) { 
-                        if (result != null) { 
-                            grid.LastSelectedMSID = MSIDCell; 
-                        } 
+                    functions.getLocalRow(MSIDCell).done(function(result) {
+                        if (result != null) {
+                            grid.LastSelectedMSID = MSIDCell;
+                        }
                     })
                 }
 
             });
 
         },
+        setTimerStatus: function(MS_Id, value) {
+            var ids = $("#records").jqGrid('getDataIDs');
+            for (var i = 0; i < ids.length; i++) {
+                var rowid = ids[i];
+                var MSIDCell = new Number($("#" + rowid).find("td[aria-describedby='records_MS_Id']").html());
+                if (MS_Id == MSIDCell) {
+                    var html = '';
+                    if (value == true) {
+                        html = '<div class="down-octagon" style="margin-left:15px;"></div>';
+                    } else if (value == false) {
+                        html = '<div class="running-circle" style="margin-left:15px;"></div>';
+                    } else {
+                        html = '<div style="margin-left:15px;"></div>';
+                    }
+                    $("#records").jqGrid('setRowData', rowid, {actionBtn: html});
+                }
+            }
+        },
         setViewColors: function () {
             var gridIDs = $("#records").getDataIDs();
 
-            
-  
             for (var i = 0; i < gridIDs.length; i++) {
                 var gridId = new Number(gridIDs[i]);
                 var rowNumber = Math.floor(grid.rowsLimit * (grid.SelectedPage - 1) + gridId);
                 var rowData = $("#records").getLocalRow(rowNumber);
-                var DateLength = $(".jqgrow")[i].children[9].innerText.toString().length; 
+                var DateLength = $(".jqgrow")[i].children[9].innerText.toString().length;
 
                 if (rowData && rowNumber > 0 && DateLength != null) {
-                    var color = functions.getColor($(".jqgrow")[i].children[5].innerText.toString().trim()); 
+                    var color = functions.getColor($(".jqgrow")[i].children[5].innerText.toString().trim());
                     $.each(rowData, function(key, value) {
                         if (DateLength > 1) {
                             $("#records").jqGrid('setCell', gridId, key, "", {color: "green", 'font-weight': 600});
@@ -470,16 +525,13 @@
                             if (key.length > 0)
                                 $("#records").jqGrid('setCell', gridId, key, "", {color: color, 'font-weight': 600});
                         }
-
-
-
                     });
-
                 }
-
             }
         },
+        IsRefreshing: false,
         Refresh: function(ForceRefresh) {
+            grid.IsRefreshing = true;
             $.ajax({
                 url: '/Home/Refresh',
                 type: 'POST',
@@ -487,7 +539,7 @@
                 success: function (data) {
                     if (data != "ERROR" && data != "CPUERR") {
                         var json;
-                        
+
                         json = $.parseJSON(data);
                         jQuery("#records").jqGrid('clearGridData', true);
                         jQuery("#records").jqGrid('setGridParam', {data : json, page: grid.SelectedPage}).trigger('reloadGrid');
@@ -536,18 +588,18 @@
                     color = 'black';
             }
             return color;
-        }, 
-        getLocalRow: function(MS_ID) { 
-            var data = $("#records").jqGrid('getGridParam', 'data'); 
-            var deferred = new $.Deferred(); 
-            $.each(data, function(key, value) { 
-                if (value.MS_Id == MS_ID) { 
-                    deferred.resolve(value); 
-                    return deferred.promise(); 
-                } 
+        },
+        getLocalRow: function(MS_ID) {
+            var data = $("#records").jqGrid('getGridParam', 'data');
+            var deferred = new $.Deferred();
+            $.each(data, function(key, value) {
+                if (value.MS_Id == MS_ID) {
+                    deferred.resolve(value);
+                    return deferred.promise();
+                }
             });
-            deferred.resolve(null); 
-            return deferred.promise(); 
+            deferred.resolve(null);
+            return deferred.promise();
         }
     };
 
@@ -565,8 +617,7 @@
                         var elementnamesplit = elementname.split("-");
                         switch (elementnamesplit[0]) {
                             case "date":
-                                //console.log('date');
-                                //console.log("#" + inputboxhandler.InputElements[i].id);
+
                                 //$( "#" + inputboxhandler.InputElements[i].id).wijinputdate();
                                 break;
                             case "select":
@@ -615,6 +666,11 @@
             $("#MS_Machine_Hours").val(0);
             $("#MS_Total_Machine_Downtime").val(0);
             $("#MS_Id").val(0);
+            inputBox.TimerId = 0;
+            window.clearInterval(inputBox.TimerId);
+            inputBox.stoptimer();
+            $("#machine_downtime_timerlabel").text("0:00");
+            $("#timer_usercontent").text("");
             $("#MFB_Id").select2("val", grid.Selected_Flagboard);
             if (grid.Selected_MS_Maint_Code == 2)
                 $("#MS_Maint_Code").val("UNSCHEDULED");
@@ -641,12 +697,18 @@
                     alert("Error Stringifying Inputs.");
                     return;
                 }
+                console.log(method);
+                console.log($("#machine_downtime_start").is(":visible"));
+                console.log($("#MS_Main_Comp_Date").prop('checked'));
+                if (method == 'edit' && $("#machine_downtime_start").is(":visible") == false && $("#MS_Main_Comp_Date").prop('checked')) {
+                    inputBox.Timer(grid.LastSelectedMSID, 'STOP', false);
+                }
                 $.ajax({
                     url: '/Home/dispatch',
                     type: 'POST',
                     data: {Inputs: InputString, type: method, CID: CID },
                     success: function(data, text, jax) {
-                        console.log("dispatch", data); 
+                        console.log("dispatch", data);
                         if (data == "true")
                             grid.Refresh(true);
                         else
@@ -817,7 +879,7 @@
             var deferred = new $.Deferred();
 
             $.each(EmployeesData, function(key, value) {
-                selectArray.push({id: value.EMP_ID, text: value.EMP_First_Name});
+                selectArray.push({id: value.EMP_ID, text: value.EMP_First_Name + " " + value.EMP_Last_Name});
             });
             deferred.resolve(selectArray);
             return deferred.promise();
@@ -826,8 +888,8 @@
             var selectArray = new Array();
             var deferred = new $.Deferred();
 
-            $.each(flagboards, function(key, value) {
-                selectArray.push({id: value, text: value.toString()});
+            $.each(flagboards, function(key, item) {
+                selectArray.push({id: item.key, text: item.value.toString()});
             });
             deferred.resolve(selectArray);
             return deferred.promise();
@@ -887,28 +949,114 @@
                     }
                 }
             });
+        },
+        TimerId: 0,
+        RefreshTimerLabel: function() {
+            console.log("refresh timer label");
+
+            inputBox.TimerId = setInterval(function(e) {
+                console.log("timer_label_refresh", grid.LastSelectedMSID);
+                inputBox.Timer(grid.LastSelectedMSID, "GET", false);
+            }, 15000);
+        },
+        UpdateActiveTimers(msid_, value_) {
+            for (var i = 0; i < ActiveTimers.length;i++) {
+                if (msid_ == ActiveTimers[i].MS_Id) {
+                    ActiveTimers[i].value = value_;
+                    return;
+                }
+            }
+            ActiveTimers.push({MS_Id: msid_, value: value_});
+            console.log(ActiveTimers);
+        },
+        Timer: function(msid_, action_, isStart) {
+
+            $.ajax({
+                url: '/Home/timer',
+                type: 'POST',
+                data: {ms_id: msid_, cid:CID, action:action_},
+                success: function(data, text, jax) {
+                    console.log(data);
+                    var s_arr = data.TimerContent.toString().split('/');
+                    console.log(s_arr);
+                    if (action_ == 'START' && data.TimerContent == 'STARTED') {
+                        inputBox.starttimer();
+                        inputBox.RefreshTimerLabel();
+                        grid.setTimerStatus(msid_, true);
+                        inputBox.UpdateActiveTimers(msid_, true);
+                    } else if (action_ == 'STOP' && s_arr[1] == 'STOPPED') {
+                        inputBox.stoptimer();
+                        $("#machine_downtime_timerlabel").text(s_arr[0]);
+                        window.clearInterval(inputBox.TimerId);
+                        inputBox.TimerId = 0;
+                        grid.setTimerStatus(msid_, false);
+                        inputBox.UpdateActiveTimers(msid_, false);
+                    } else if (action_ == 'GET' && data != 'ERR' && data.length != 0) {
+
+                        if (s_arr.length == 2) {
+                            $("#machine_downtime_timerlabel").text(s_arr[0]);
+                            if (s_arr[1].toString().trim() == 'true') {
+                                inputBox.starttimer();
+                                grid.setTimerStatus(grid.LastSelectedMSID, true);
+                                if (isStart == true)
+                                    inputBox.RefreshTimerLabel();
+                            } else {
+                                inputBox.stoptimer();
+                                if (s_arr[0] != '0:00')
+                                    grid.setTimerStatus(grid.LastSelectedMSID, false);
+                            }
+                        } else {
+                            alert('timer parse error.');
+
+                        }
+
+                    }
+
+                    $("#timer_usercontent").text(data.UserContent);
+                },
+                error: function(data) {
+                    alert(data);
+                }
+            });
+        }, stoptimer: function() {
+            $("#machine_downtime_stop").fadeOut(50);
+            $("#machine_downtime_start").fadeIn(50);
+            $("#machine_downtime_start").attr('disabled', 'disabled');
+            $("#machine_downtime_timerlabel").css("text-decoration", "underline");
+            $("#timer_clock_gif").css('display', 'none');
+
+            setTimeout(function () {
+                $("#machine_downtime_start").attr('disabled', false);
+            }, 250);
+        }, starttimer: function() {
+            $("#machine_downtime_start").fadeOut(50);
+            $("#machine_downtime_stop").fadeIn(50);
+            $("#machine_downtime_stop").attr('disabled', 'disabled');
+            $("#machine_downtime_timerlabel").css("text-decoration", "none");
+            $("#timer_clock_gif").css('display', 'block');
+
+            setTimeout(function () {
+                $("#machine_downtime_stop").attr('disabled', false);
+            }, 250);
+        }, 
+        SetEmployeeStatusLabel: function(result) { 
+
+            if (result == null) 
+                return; 
+
+            if (result.MS_WOClosed_Timestamp.length > 0) { 
+                $("#lblCompletedBy").text("Completed By");
+            } else {
+                $("#lblCompletedBy").text("Assigned To");
+            }
         }
     };
 
-    var $DefectType_dialog = $('#inputbox').wijdialog({
-        showStatus: false,
-        showControlBox: false,
+    var $DefectType_jq_dialog = $("#inputbox").dialog({
+        resizable:false,
         autoOpen: false,
-        modal: true,
-        captionButtons: {
-            pin: { visible: false },
-            refresh: { visible: false },
-            toggle: { visible: false },
-            minimize: { visible: false },
-            maximize: { visible: false }
-        },
         height: "556",
         width: "810",
-        buttonCreating : function (e, data) {
-            $(".ui-button")
-                .css("background", "#555")
-                .css("color", "white");
-        },
         buttons: {
             'UPDATE': function (event) {
                 if (inputBox.method == "edit") {
@@ -931,7 +1079,7 @@
                     }
                 },300);
 
-                $(this).wijdialog('close');
+                $(this).dialog('close');
             },
             'DELETE': function () {
 
@@ -942,7 +1090,7 @@
                     alert("delete functionality has been disabled");
                 }
 
-                $(this).wijdialog('close');
+                $(this).dialog('close');
             },
             'EXIT': function () {
                 setTimeout(function () {
@@ -953,16 +1101,27 @@
                         $('#DeleteButton').css({'display':'inline'});
                     }
                 },300);
-                $(this).wijdialog('close');
+                $(this).dialog('close');
             }
         },
         open: function () {
+            setTimeout(function() {
+                console.log('xx');
+                if ($("#MS_Main_Comp_Date").prop('checked')) {
+                    $("#machine_downtime_start").attr("disabled", "disabled");
+                } else {
+                    $("#machine_downtime_start").removeAttr("disabled");
+                }
+            }, 400)
+
         },
         close: function () {
             $("#ActiveMachineImage1").css("display", "none");
             $("#ActiveMachineImage2").css("display", "none");
             $("#ActiveMachineImage3").css("display", "none");
             $("#ActiveMachineImage4").css("display", "none");
+            clearInterval(inputBox.TimerId);
+            inputBox.Timerid = 0;
             //setTimeout(function(){gridhandler.RefreshGrid(schedhold, showcompleted)}, 1000);
             //inputboxhandler.ResolveFileImageStatus();
         }

@@ -1404,7 +1404,6 @@ button.ui-button::-moz-focus-inner {
 
         .ui-dialog .ui-dialog-titlebar-close span {
             display: block;
-            margin: 1px;
         }
 
         .ui-dialog .ui-dialog-titlebar-close:hover, .ui-dialog .ui-dialog-titlebar-close:focus {

@@ -11,8 +11,10 @@ namespace FlagBoard_mvc.Controllers
     public class ManageController : Controller
     {
 
-        private string CIDTest = "000578";
+        private string CIDTest = "000485";
         private string debugMode = ConfigurationManager.AppSettings["debugMode"];
+        private Models.FlagboardsModel fbmodel;
+        private Dictionary<string, string> fbdict = new Dictionary<string, string>(); 
 
         // GET: Manage
         public ActionResult Flagboards()
@@ -22,11 +24,11 @@ namespace FlagBoard_mvc.Controllers
             if (CID.Length < 6)
                 RedirectToAction("Locations");
 
-            Models.FlagboardsModel model = getFlagboardModelObjects(CID);
-            model.CID = CID;
-            model.MFB_Id = getSelectedFlagboard(); 
+            fbmodel = getFlagboardModelObjects(CID);
+            fbmodel.CID = CID;
+            fbmodel.MFB_Id = getSelectedFlagboard(); 
 
-            return View(model);
+            return View(fbmodel);
         }
 
         [HttpPost]
@@ -41,7 +43,10 @@ namespace FlagBoard_mvc.Controllers
                 posted = mapper.mapCollection(pageInputs);
 
                 if (posted.MFB_Id > 0)
-                    insertCookie("MFBInfo", "MFBID", posted.MFB_Id.ToString()); 
+                {
+                    insertCookie("MFBInfo", "MFBID", posted.MFB_Id.ToString());
+                    setFBName(posted.MFB_Id); 
+                }
 
                 if (posted.CID.Length < 6)
                     throw new Exception("ERROR: incorrect formatting of Location variable.  Please reset location.");
@@ -157,7 +162,7 @@ namespace FlagBoard_mvc.Controllers
             try
             {
                 CtxService service = new CtxService(null, CID);
-                List<int> fbs = service.getFlagBoards();
+                List<Models.pageInputs> fbs = service.getFlagBoardsInput();
 
                 if (fbs == null || fbs.Count == 0)
                 {
@@ -168,9 +173,13 @@ namespace FlagBoard_mvc.Controllers
 
                 foreach (var item in fbs)
                 {
-                    fbInput.input.options.Add(new InputObject.option { text = "Flagboard # " + item, value = item.ToString() });
+                    fbInput.input.options.Add(new InputObject.option { text = "FB " + item.value, value = item.key });
+                    fbdict.Add(item.key, item.value); 
                 }
-                fbInput.input.options.Add(new InputObject.option { text = "ALL", value = "0" }); 
+
+                fbInput.input.options.Add(new InputObject.option { text = "ALL", value = "0" });
+
+                Session["MFB_Array"] = fbdict; 
             }
             catch (Exception ex)
             {
@@ -179,6 +188,16 @@ namespace FlagBoard_mvc.Controllers
             }
 
             return fbInput;
+        }
+
+        private void setFBName(int MFB_Id)
+        {
+            fbdict = (Dictionary<string, string>)Session["MFB_Array"]; 
+
+            if (MFB_Id != 0 && fbdict.ContainsKey(MFB_Id.ToString()))
+            {
+                Session["MFB_Name"] = fbdict[MFB_Id.ToString()];
+            } 
         }
 
         private PageInput getLocationsDropdown()

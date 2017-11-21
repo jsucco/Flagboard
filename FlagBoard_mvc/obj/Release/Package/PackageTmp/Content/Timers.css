@@ -1,0 +1,88 @@
+﻿.ui-jqgrid tr.jqgrow td {
+    font-weight: normal;
+    overflow: hidden;
+    white-space: pre;
+    height: 22px;
+    padding: 0 2px 0 2px;
+    border-bottom-width: 1px;
+    border-bottom-color: inherit;
+    border-bottom-style: solid;
+    /*word-wrap: break-word;*/
+    /*white-space: pre-wrap;*/
+    /*white-space: -moz-pre-wrap;
+    white-space: -pre-wrap;
+    white-space: -o-pre-wrap;*/
+    overflow: hidden;
+    height: auto;
+    vertical-align: middle;
+    padding-top: 3px;
+    padding-bottom: 3px;
+}
+.select2-results {
+    max-height: 290px;
+    height: 300px;
+    padding: 0 0 0 4px;
+    margin: 4px 4px 4px 0;
+    position: relative;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+}
+
+.stop-circle {
+	width: 30px !important;
+	height: 30px !important;
+	background: red;
+	-moz-border-radius: 15px;
+	-webkit-border-radius: 15px;
+	border-radius: 15px;
+}
+
+.start-circle { 
+    width: 30px !important;
+	height: 30px !important;
+    background: #468847;
+    -moz-border-radius: 15px;
+	-webkit-border-radius: 15px;
+	border-radius: 15px;
+}
+
+.running-circle { 
+    width: 30px !important;
+	height: 30px !important;
+    background: #468847;
+    -moz-border-radius: 15px;
+	-webkit-border-radius: 15px;
+	border-radius: 15px;
+}
+
+.down-octagon {
+	width: 30px;
+	height: 30px;
+	background: red;
+	position: relative;
+}
+
+.down-octagon:before {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	border-bottom: 7px solid red;
+	border-left: 7px solid #eee;
+	border-right: 7px solid #eee;
+	width: 30px;
+	height: 0;
+}
+
+.down-octagon:after {
+	content: "";
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	border-top: 7px solid red;
+	border-left: 7px solid #eee;
+	border-right: 7px solid #eee;
+	width: 30px;
+	height: 0;
+}

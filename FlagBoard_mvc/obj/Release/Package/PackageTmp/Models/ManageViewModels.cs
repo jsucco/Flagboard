@@ -11,7 +11,7 @@ namespace FlagBoard_mvc.Models
         public List<Machine> machines { get; set; }
         public List<Maintenance_Types> types { get; set; }
         public List<Employee> employees { get; set; }
-        public List<int> flagboards { get; set; }
+        public pageInputs[] flagboards { get; set; }
         public string CID { get; set; }
         public Corporate Location { get; set; }
         public List<schedule> schedule { get; set; }
@@ -21,6 +21,9 @@ namespace FlagBoard_mvc.Models
         public string errorMessage { get; set; }
         public bool isMobile { get; set; }
         public bool canDelete { get; set; }
+        public TimerStatus[] ActiveTimers { get; set; }
+        public string UserName { get; set; }
+        public string ticketname { get; set; }
     }
 
     public class MobileEditorModel
@@ -30,6 +33,8 @@ namespace FlagBoard_mvc.Models
         public bool canDelete { get; set; }
         public string CID { get; set; }
         public int MS_Id { get; set; }
+        public int MM_Id { get; set; }
+        public Machine[] machines { get; set; }
     }
 
     public class FlagboardsModel
@@ -38,6 +43,7 @@ namespace FlagBoard_mvc.Models
         public IList<Helpers.InputObject> hiddenInputs { get; set; }
         public string CID { get; set; }
         public int MFB_Id;
+        public string MFB_Name; 
     }
 
     public class FlagboardPostModel
@@ -57,6 +63,12 @@ namespace FlagBoard_mvc.Models
     {
         public int MFB_Id { get; set; }
         public string CID { get; set; }
+    }
+
+    public class TimerPostModel
+    {
+        public string TimerContent { get; set; }
+        public string UserContent { get; set; }
     }
 
     public class schedule
@@ -89,6 +101,7 @@ namespace FlagBoard_mvc.Models
         public float MS_Total_Machine_Downtime { get; set; }
         public int MS_Machine_Hours { get; set; }
         public int EMP_ID { get; set; }
+        public string actionbtn { get; set; }
     }
 
     public class pageInputs
@@ -132,6 +145,12 @@ namespace FlagBoard_mvc.Models
         public string filename1 { get; set; }
         public byte[] filebytes1 { get; set; }
 
+    }
+
+    public class TimerStatus
+    {
+        public int MS_Id { get; set; }
+        public bool value { get; set; }
     }
 
 

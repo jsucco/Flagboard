@@ -3,17 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using FlagBoard_mvc.Models.EF;
-using FlagBoard_mvc.Models; 
+using FlagBoard_mvc.Models;
 using System.Data.SqlClient;
-using System.Data.Entity.Core.EntityClient;
-using System.Data.Entity.Core.Metadata.Edm;
-using System.Reflection;
-using FlagBoard_mvc.Helpers;
-using System.Threading.Tasks;
 
 namespace FlagBoard_mvc.Helpers
 {
-    public class CtxService
+    public class CtxService : CtxCache
     {
         public bool error = false;
         public string errorMessage = ""; 
@@ -24,12 +19,16 @@ namespace FlagBoard_mvc.Helpers
             if (CID.Length < 6)
                 throw new Exception("CID incorrect length");
 
+            CID_ = CID;
+
             context = (_context != null) ? _context : getContext(CID); 
         }
 
         private CtxContext context;
 
-        private ManagerService manager = new ManagerService(); 
+        private ManagerService manager = new ManagerService();
+
+        private string CID_; 
 
         private CtxContext getContext(string CID)
         {
@@ -51,6 +50,7 @@ namespace FlagBoard_mvc.Helpers
             if (record.MS_Maint_Code == 0)
                 throw new Exception("Maintenance Code must be selected."); 
         }
+
         public int Update(schedule record)
         {
             var MS_ID = record.MS_Id;
@@ -70,11 +70,11 @@ namespace FlagBoard_mvc.Helpers
             scheduleRecord.MS_Workorder = record.MS_Workorder;
             scheduleRecord.MS_Frequency = ConvertToShort(record.MS_Frequency);
             scheduleRecord.MS_Last_Main_Date = parseDate(record.MS_Last_Main_Date);
-            if (record.MS_Main_Comp_Date == "True")
+            if (record.MS_Main_Comp_Date.ToUpper() == "TRUE")
             {
                 scheduleRecord.MS_Main_Comp_Date = System.DateTime.Now.Date;
                 scheduleRecord.MS_WOClosed_Timestamp = DateTime.Now;
-            } else if (record.MS_Main_Comp_Date == "False")
+            } else if (record.MS_Main_Comp_Date.ToUpper() == "FALSE")
             {
                 scheduleRecord.MS_Main_Comp_Date = null;
                 scheduleRecord.MS_WOClosed_Timestamp = null; 
@@ -86,10 +86,24 @@ namespace FlagBoard_mvc.Helpers
             scheduleRecord.MS_Machine_Hours = record.MS_Machine_Hours;
             scheduleRecord.MS_Unscheduled_Reason = record.MS_Unscheduled_Reason;
             scheduleRecord.MS_Notes = record.MS_Notes;
-            scheduleRecord.MS_Total_Machine_Downtime = record.MS_Total_Machine_Downtime / 60;
+            //scheduleRecord.MS_Total_Machine_Downtime = record.MS_Total_Machine_Downtime / 60;
             scheduleRecord.MFB_Id = record.MFB_Id;
             
             return context.SaveChanges(); 
+        }
+
+        public void updateMachineDowntime(int ms_id, int downtime)
+        {
+            if (ms_id == 0)
+                throw new Exception("primary index cannot be 0.");
+
+            var mrec = (from x in context.Maintenance_Schedule where x.MS_Id == ms_id select x).FirstOrDefault(); 
+
+            if (mrec != null)
+            {
+                mrec.MS_Total_Machine_Downtime = downtime;
+                context.SaveChanges(); 
+            }
         }
 
         public void updateCompDates()
@@ -114,11 +128,19 @@ namespace FlagBoard_mvc.Helpers
             Maintenance_Schedule newRecord = new Maintenance_Schedule();
             newRecord.MM_Id = record.MM_Id;
             newRecord.MT_Id = record.MT_Id;
+
             if (record.MS_Next_Main_Date.Trim().Length == 0)
                 newRecord.MS_Next_Main_Date = DateTime.Now;
             else 
                 newRecord.MS_Next_Main_Date = parseDate(record.MS_Next_Main_Date);
-            newRecord.MS_Workorder = record.MS_Workorder;
+
+            var woHashed = GetDistinctWorkorders(CID_); 
+
+            if (woHashed.Contains(record.MS_Workorder))
+                newRecord.MS_Workorder = getNewWorkoder().ToString(); 
+             else 
+                newRecord.MS_Workorder = record.MS_Workorder;
+
             newRecord.MS_Frequency = ConvertToShort(record.MS_Frequency);
             if (record.MS_Last_Main_Date.Trim().Length == 0)
                 newRecord.MS_Last_Main_Date = DateTime.Now; 
@@ -137,7 +159,15 @@ namespace FlagBoard_mvc.Helpers
             newRecord.MFB_Id = record.MFB_Id;
             newRecord.MS_WOCreate_Timestamp = DateTime.Now;
             context.Maintenance_Schedule.Add(newRecord);
-            return context.SaveChanges(); 
+
+            int affected = context.SaveChanges();
+
+            if (affected > 0)
+            {
+                AddWorkOrderToCache(newRecord.MS_Workorder, CID_); 
+            }
+
+            return affected; 
         }
 
         private DateTime parseDate(string dateStr)
@@ -181,13 +211,55 @@ namespace FlagBoard_mvc.Helpers
             
         }
 
-        public int getNewWorkoder()
+        public int getNewWorkoder2()
         {
             int WorkOrder = 1001;
-            var wo = (from x in context.Maintenance_Schedule orderby x.MS_Id descending select x.MS_Workorder).FirstOrDefault();
+            
+            var wo = (from x in context.Maintenance_Schedule                      
+                      orderby Convert.ToDecimal(x.MS_Workorder) descending
+                      select x.MS_Workorder).FirstOrDefault();
+
             bool result = Int32.TryParse(wo, out WorkOrder);
             return (result == true) ? WorkOrder + 1 : 1001;
         }
+
+        public int getNewWorkoder()
+        {
+            int results = 0;
+            string woStr = ""; 
+            using (SqlConnection conn = new SqlConnection(manager.BuildConnectionString(CID_)))
+            {
+                string sqlstatement = "select top(1) MS_Workorder from Maintenance_Schedule " +
+                                        "WHERE isnumeric(MS_Workorder) = 1 " +
+                                        "order by CAST(MS_Workorder AS INT) desc";
+                conn.Open();
+                SqlCommand cmd = new SqlCommand(sqlstatement, conn);
+                try
+                {
+                    
+                    cmd.CommandType = System.Data.CommandType.Text;
+                    SqlDataReader dr = cmd.ExecuteReader(); 
+                    while(dr.Read())
+                    {
+                        woStr = dr[0].ToString(); 
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Elmah.ErrorSignal.FromCurrentContext().Raise(ex);
+                }
+                finally
+                {
+                    conn.Close();
+                }
+            }
+
+            if (int.TryParse(woStr, out results))
+                return results + 1;
+            else
+                return 0;
+        }
+
         public List<Machine> getMachines(int flgId = 0)
         {
             List<Machine> machines = new List<Machine>(); 
@@ -195,7 +267,7 @@ namespace FlagBoard_mvc.Helpers
             {
                 context.Configuration.LazyLoadingEnabled = false;
                 var machenums = (from x in context.Machines
-                                 where x.MM_Active == true && x.MM_Name.Length > 0
+                                 where x.MM_Active == true && x.MM_Name.Length > 0 && x.MM_MFB_Code1 != null
                                  select x).AsEnumerable();
                 
                 machines = machenums.Select(x => new Machine {MM_Id= x.MM_Id, MM_Name = x.MM_Name, Mach_Filename1 = x.Mach_Filename1, Mach_Filename2 = x.Mach_Filename2, Mach_Filename3 = x.Mach_Filename3, Mach_Filename4 = x.Mach_Filename4, MM_MFB_Code1 = x.MM_MFB_Code1}).ToList();
@@ -289,20 +361,36 @@ namespace FlagBoard_mvc.Helpers
             return employees;
         }
 
-        public List<int> getFlagBoards()
+        public List<Models.pageInputs> getFlagBoards()
         {
-            List<int> fbs = new List<int>(); 
+            List<pageInputs> fbs = new List<pageInputs>(); 
             try
             {
                 context.Configuration.LazyLoadingEnabled = false; 
                 fbs = (from x in context.Maintenance_Flagboard
-                       select x.MFB_Id).ToList();
+                       select new pageInputs { key = x.MFB_Id.ToString(), value = x.Loc_Description }).ToList();
             } catch (Exception e)
             {
                 error = true;
                 errorMessage = e.Message; 
             }
-            finally
+            return fbs; 
+        }
+
+        public List<pageInputs> getFlagBoardsInput()
+        {
+            List<pageInputs> fbs = new List<pageInputs>(); 
+
+            try
+            {
+                context.Configuration.LazyLoadingEnabled = false;
+                fbs = (from x in context.Maintenance_Flagboard
+                       select new pageInputs { key = x.MFB_Id.ToString(), value = x.Loc_Description }).ToList(); 
+            } catch (Exception e)
+            {
+                error = true;
+                errorMessage = e.Message; 
+            } finally
             {
                 context.Dispose(); 
             }
@@ -323,6 +411,28 @@ namespace FlagBoard_mvc.Helpers
                 context.Dispose(); 
             }
             return record; 
+        }
+
+        public string getFBName(int id)
+        {
+            if (id == 0)
+                throw new Exception("primary key required"); 
+
+            try
+            {
+                context.Configuration.LazyLoadingEnabled = false;
+                var name = (from x in context.Maintenance_Flagboard
+                            where x.MFB_Id == id
+                            select x.Loc_Description).FirstOrDefault();
+
+                if (name != null)
+                    return name; 
+
+            } catch(Exception ex)
+            {
+                Elmah.ErrorSignal.FromCurrentContext().Raise(ex); 
+            } 
+            return ""; 
         }
 
         public List<schedule> getSchedule(int MS_Maint_Code = 2)
@@ -367,6 +477,7 @@ namespace FlagBoard_mvc.Helpers
                             }).AsEnumerable();
                 records = recs.Select(r => new schedule
                 {
+                    actionbtn = "",
                     MS_Unscheduled_Reason = (r == null || r.MS_Unscheduled_Reason == null) ? "" : r.MS_Unscheduled_Reason,
                     MT_Id = (int)r.MT_Id,
                     MT_MFB_Code2 = r.MT_MFB_Code2,
@@ -394,7 +505,7 @@ namespace FlagBoard_mvc.Helpers
                     MS_Total_Machine_Downtime = r.MS_Total_Machine_Downtime * 60,
                     MS_Machine_Hours = (r.MS_Machine_Hours == null) ? 0 : (int)r.MS_Machine_Hours,
                     EMP_ID = (r.EMP_ID == null) ? 0 : (int)r.EMP_ID,
-                    CompletedBy = r.EMP_First_Name ?? "" + " " + r.EMP_Last_Name ?? ""
+                    CompletedBy = r.EMP_First_Name + " " + r.EMP_Last_Name
                            }).OrderBy(x => x.MS_WOCreate_Date).ToList();
 
                 if (MS_Maint_Code == 1)
@@ -409,19 +520,74 @@ namespace FlagBoard_mvc.Helpers
             return records; 
         }
 
+        public HashSet<string> GetDBDistinctWorkOrders(string CID)
+        {
+            try
+            {
+                var wos = (from x in context.Maintenance_Schedule
+                           select x.MS_Workorder).Distinct();
+
+                HashSet<string> woh = new HashSet<string>(); 
+
+                foreach(var item in wos)
+                {
+                    if (item.Trim().Length > 0)
+                        woh.Add(item); 
+                }
+
+                if (woh.Count > 0)
+                    AddCacheItem("uniq-wos-" + CID, woh); 
+
+                return woh;
+            } catch (Exception ex)
+            {
+                Elmah.ErrorSignal.FromCurrentContext().Raise(ex); 
+            } finally
+            {
+                //context.Dispose(); 
+            }
+
+            return new HashSet<string>(); 
+        }
+
+        public HashSet<string> GetDistinctWorkorders(string CID)
+        {
+            var cachedWOs = getCacheitem("uniq-wos-" + CID);
+
+            if (cachedWOs == null)
+                return GetDBDistinctWorkOrders(CID);
+
+            return (HashSet<string>)cachedWOs; 
+        }
+
+        public void AddWorkOrderToCache(string wo, string CID)
+        {
+            if (wo.Trim().Length == 0)
+                return; 
+
+            HashSet<string> existing = GetDistinctWorkorders(CID);
+
+            existing.Add(wo);
+
+            AddCacheItem("uniq-wos-" + CID, existing);
+        }
+
         private string getDefault(string obj)
         {
             return (obj != null) ? obj : ""; 
         }
 
-        public void cache(List<schedule> records)
+        public void cache(List<schedule> records, string cid)
         {
-            if (records != null && records.Count > 0)
+            if (records == null && records.Count == 0)
+                return;
+
+            if (cid.ToString().Trim().Length != 6)
                 return; 
 
-            HttpContext.Current.Cache.Insert("MaintenanceSchedule", records, null, DateTime.Now.AddDays(3), System.Web.Caching.Cache.NoSlidingExpiration);
+            HttpContext.Current.Cache.Insert("MaintenanceSchedule_" + cid.ToString().Trim(), records, null, DateTime.Now.AddDays(2), System.Web.Caching.Cache.NoSlidingExpiration);
 
-            HttpContext.Current.Cache.Insert("MaintenanceScheduled_cacheEntry_Timestamp", DateTime.Now, null, DateTime.Now.AddDays(3), System.Web.Caching.Cache.NoSlidingExpiration); 
+            HttpContext.Current.Cache.Insert("MaintenanceScheduled_cacheEntry_Timestamp_" + cid.ToString().Trim(), DateTime.Now, null, DateTime.Now.AddDays(2), System.Web.Caching.Cache.NoSlidingExpiration); 
 
         }
 
@@ -429,9 +595,9 @@ namespace FlagBoard_mvc.Helpers
         {
             try
             {
-                HttpContext.Current.Cache.Remove("MaintenanceSchdule");
+                HttpContext.Current.Cache.Remove("MaintenanceSchdule_" + CID_);
 
-                HttpContext.Current.Cache.Remove("MaintenanceScheduled_cacheEntry_Timestamp");
+                HttpContext.Current.Cache.Remove("MaintenanceScheduled_cacheEntry_Timestamp_" + CID_);
             } catch(Exception ex)
             {
 

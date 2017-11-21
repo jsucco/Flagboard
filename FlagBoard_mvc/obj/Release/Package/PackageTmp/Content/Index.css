@@ -25,3 +25,7 @@
     font-size: small; 
     color:white;
 }
+ .ui-dialog .ui-dialog-titlebar-close span {
+    display: block;
+    margin: -8px !important;
+}

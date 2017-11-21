@@ -11,15 +11,17 @@ using System.Reflection;
 using FlagBoard_mvc.Helpers;
 using System.IO;
 using System.Diagnostics;
+using System.Web.Security;
 
 namespace FlagBoard_mvc.Controllers
 {
     public class HomeController : Controller
     {
-        private string CIDTest = "000578";
+        private string CIDTest = "000485";
         private string debugMode = ConfigurationManager.AppSettings["debugMode"];
         private IndexViewModel model = new IndexViewModel();
-
+        private Helpers.CtxService service;
+        private string ticketname = ""; 
         public ActionResult Index()
         {              
             model.CID = getCID();
@@ -27,21 +29,26 @@ namespace FlagBoard_mvc.Controllers
             if (model.CID.Trim().Length < 6)
                 return RedirectToAction("Locations", "Manage"); 
 
-            Helpers.CtxService service = new Helpers.CtxService(null, model.CID);
+            service = new Helpers.CtxService(null, model.CID);
             Helpers.ManagerService manageservice = new Helpers.ManagerService(); 
             try
             {
                 model.MFB_Id = getSelectedFlagboard();
                 model.machines = service.getMachines(model.MFB_Id);
                 model.types = service.getMaintenanceTypes();
-                model.employees = service.getEmployees(); 
+                model.employees = service.getEmployees();
+                model.MS_Maint_Code = getMaintCode();
                 model.schedule = getSchedule();
                 model.Location = manageservice.getRecord(model.CID.Trim()); 
-                model.flagboards = service.getFlagBoards();            
-                model.MFB_label = (model.MFB_Id < 1) ? "ALL" : model.MFB_Id.ToString(); 
-                model.MS_Maint_Code = getMaintCode();
+                model.flagboards = service.getFlagBoards().ToArray();            
+                model.MFB_label = getFBLabel(model.MFB_Id);               
+                model.UserName = User.Identity.Name; 
+                UpdateCachedTimers(model.CID); 
+
+                model.ActiveTimers = GetActiveTimers(model.CID);
                 model.isMobile = isMobile();
-                model.canDelete = false; 
+                model.canDelete = IsAdmin();
+                model.ticketname = ticketname; 
             } finally
             {
                 service.Dispose();
@@ -52,8 +59,10 @@ namespace FlagBoard_mvc.Controllers
                 model.errorMessage = service.errorMessage;
 
             if (model.CID.Length < 6)
-                return RedirectToAction("Locations", "Manage"); 
-            
+                return RedirectToAction("Locations", "Manage");
+
+            addLocationCookie(model.CID.Trim());
+
             return View(model);
         }
 
@@ -117,8 +126,7 @@ namespace FlagBoard_mvc.Controllers
         public ActionResult MobileEditor()
         {
             var CID = getCID();
-            int MS_Id = 0;
-            int MFB_Id = 0; 
+            int MS_Id = 0, MM_Id = 0, MFB_Id = 0;
 
             if (CID.Length < 6)
                 return RedirectToAction("Locations", "Manage");    
@@ -127,11 +135,16 @@ namespace FlagBoard_mvc.Controllers
                 MS_Id = (Int32.TryParse(Request.QueryString["MSID"], out MS_Id) == false) ? 0 : MS_Id;
 
             if (Request.QueryString["MFBID"] != null)
-                MFB_Id = (Int32.TryParse(Request.QueryString["MFBID"], out MFB_Id) == false) ? 0 : MFB_Id; 
+                MFB_Id = (Int32.TryParse(Request.QueryString["MFBID"], out MFB_Id) == false) ? 0 : MFB_Id;
 
-            Models.MobileEditorModel model = getEditorModelObject(CID, MS_Id, MFB_Id);
+            if (Request.QueryString["MMID"] != null)
+                MM_Id = (Int32.TryParse(Request.QueryString["MMID"], out MM_Id) == false) ? 0 : MM_Id; 
+
+            Models.MobileEditorModel model = getEditorModelObject(CID, MS_Id, MFB_Id, MM_Id);
             model.canDelete = false;
-            model.MS_Id = MS_Id; 
+            model.MS_Id = MS_Id;
+            model.MM_Id = MM_Id; 
+
             try
             {
                 model.inputs = mapScheduleValues(model.inputs, model.MS_Id, model.CID); 
@@ -148,21 +161,22 @@ namespace FlagBoard_mvc.Controllers
         }
 
         [HttpPost]
-        public ActionResult MobileEditor(ICollection<InputObject> pageInputs, string method, string CID, string MSID)
+        public ActionResult MobileEditor(ICollection<InputObject> pageInputs, string method, string CID, string MSID, string MMID)
         {
-            int MS_Id = 0;
+            int MS_Id = 0, MM_Id = 0;
             int MFBID = 1;
             Int32.TryParse(MSID, out MS_Id);
+            Int32.TryParse(MMID, out MM_Id); 
             try
-            {
-                
+            {              
                 if (CID.Length < 6)
                     throw new Exception("Location variable in wrong format");
 
                 Helpers.objectMapper<schedule> mapper = new Helpers.objectMapper<schedule>();
                 schedule record = mapper.mapCollection(pageInputs);
                 MFBID = record.MFB_Id;
-                record.MS_Id = MS_Id; 
+                record.MS_Id = MS_Id;
+
                 if (record == null)
                     throw new Exception("ERROR: could not map page inputs.  Contact helper desk to log bug.");
                 switch (method.ToUpper())
@@ -178,9 +192,11 @@ namespace FlagBoard_mvc.Controllers
                 }
             } catch (Exception ex)
             {
-                Models.MobileEditorModel model = getEditorModelObject(CID, MS_Id, MFBID);
+                Models.MobileEditorModel model = getEditorModelObject(CID, MS_Id, MFBID, MM_Id);
                 model.CID = CID;
                 model.MS_Id = MS_Id;
+                model.MM_Id = MM_Id; 
+
                 if (model.inputs.Count > 0)
                 {
                     model.inputs[0].errorFlag = true;
@@ -203,7 +219,7 @@ namespace FlagBoard_mvc.Controllers
                     break;
                 default:
                     service.Update(record);
-                    if (record.MS_Maint_Code == 1 && record.MS_Main_Comp_Date == "True")
+                    if (record.MS_Maint_Code == 1 && record.MS_Main_Comp_Date.ToUpper() == "TRUE")
                     {
                         if (record.MS_Frequency < 1)
                             throw new Exception("Interval must be greater than 0");
@@ -264,8 +280,7 @@ namespace FlagBoard_mvc.Controllers
                     objSerialized = jser.Serialize(uncompleted);
                     return Json(objSerialized, JsonRequestBehavior.AllowGet); 
                 }
-                if (updated != null && updated.Count > 0)
-                    service.cache(updated); 
+                
                 objSerialized = jser.Serialize(updated);
             }
             catch (Exception ex)
@@ -304,20 +319,7 @@ namespace FlagBoard_mvc.Controllers
                         {
                             if (record.MS_Frequency < 1)
                                 throw new Exception("Interval must be greater than 0");
-                           // System.Threading.Tasks.Task.Run(() => AutoAddScheduledOrder(record, service));
                             AutoAddScheduledOrder(record, service);
-                            //if (record.MS_Frequency < 1)
-                            //    throw new Exception("Interval must be greater than 0");
-                            //int defaultEMPID = service.getDefaultEMPID(); 
-                            //record.MS_Next_Main_Date = DateTime.Now.AddDays(record.MS_Frequency).ToShortDateString() + " " + DateTime.Now.AddDays(record.MS_Frequency).ToShortTimeString();
-                            //record.MS_Main_Comp_Date = ""; 
-                            //record.MS_WOCreate_Timestamp = DateTime.Now.AddDays(record.MS_Frequency).ToShortDateString() + " " + DateTime.Now.AddDays(record.MS_Frequency).ToShortTimeString();
-                            //record.MS_WOClosed_Timestamp = "";
-                            //record.EMP_ID = (defaultEMPID > 0) ? defaultEMPID : record.EMP_ID; 
-
-                            //int result = service.Add(record);
-                            //if (result == 0)
-                            //    throw new Exception("Error editing scheduled maintenance record."); 
                         }
                         userMessage = "true"; 
                         break;
@@ -326,6 +328,7 @@ namespace FlagBoard_mvc.Controllers
                             throw new Exception("Unscheduled Reason cannot be greater than 50 characters long.");
 
                         int rowsaff = service.Add(record);
+                        service.Dispose(); 
                         if (rowsaff == 0)
                             throw new Exception("unknown error adding rows. ");
                         userMessage = "true"; 
@@ -335,16 +338,118 @@ namespace FlagBoard_mvc.Controllers
                         userMessage = "true"; 
                         break; 
                 }
-                service.clearCache(); 
+                
             } catch (Exception ex)
             {
                 userMessage = "ERROR: " + ex.Message; 
             } finally
             {
                 service.Dispose();
+                service.clearCache();
             }
 
             return Json(userMessage, JsonRequestBehavior.AllowGet); 
+        }
+
+        [HttpPost]
+        public JsonResult timer(int ms_id, string cid, string action)
+        {
+            var result = "";
+            var usercontent = ""; 
+            var cache_key = "ms_timer_" + cid + "_" + ms_id;
+            switch (action)
+            {
+                case "GET":                                
+                    try
+                    {
+                        var started = "false"; 
+                        TimeSpan prior_ts = new TimeSpan();
+                        var test_cache_str = "ms_timer_" + cid + "_" + ms_id + "_prior_timespan";
+                        var c_obj = HttpContext.Cache[test_cache_str];
+
+                        if (c_obj != null)
+                        {
+                            prior_ts = (TimeSpan)HttpContext.Cache[cache_key + "_prior_timespan"]; 
+                        }
+                        if (HttpContext.Cache[cache_key] != null)
+                        {
+                            DateTime startime = (DateTime)HttpContext.Cache[cache_key];
+                            TimeSpan nws = (DateTime.Now - startime);
+                            prior_ts =  + prior_ts.Add(nws);
+                            started = "true"; 
+                        }
+                        if (prior_ts.Hours + prior_ts.Minutes > 0)
+                        {
+                            //result = prior_ts.Hours.ToString() + ":" + prior_ts.Minutes.ToString() + "/" + started;
+                            result = prior_ts.ToString(@"hh\:mm") + "/" + started; 
+                        }                           
+                        else
+                        {
+                            result = "0:00/" + started;
+                        }
+                        if (HttpContext.Cache[cache_key + "_owner"] != null)
+                        {
+                            usercontent = (string)HttpContext.Cache[cache_key + "_owner"]; 
+                        }
+                             
+                    } catch (Exception ex)
+                    {
+                        result = "ERR";
+                        Elmah.ErrorSignal.FromCurrentContext().Raise(ex);
+                    }
+                    
+                    break;
+                case "START":                  
+                    result = "STARTED";
+                    HttpContext.Cache.Insert(cache_key, DateTime.Now, null, DateTime.Now.AddMonths(6), System.Web.Caching.Cache.NoSlidingExpiration);
+                    HttpContext.Cache.Insert(cache_key + "_owner", User.Identity.Name + ": " + DateTime.Now.ToShortDateString() + " " + DateTime.Now.ToShortTimeString(), null, DateTime.Now.AddMonths(6), System.Web.Caching.Cache.NoSlidingExpiration);
+                    usercontent = User.Identity.Name + ": " + DateTime.Now.ToShortDateString() + " " + DateTime.Now.ToShortTimeString();
+                    UpdateTimerList(ms_id, true, cid); 
+
+                    break;
+                case "STOP":
+                    if (HttpContext.Cache[cache_key] != null)
+                    {
+                        try
+                        {
+                            TimeSpan prior_ts = new TimeSpan();
+                            if (HttpContext.Cache[cache_key + "_prior_timespan"] != null)
+                            {
+                                prior_ts = (TimeSpan)HttpContext.Cache[cache_key + "_prior_timespan"];
+                                HttpContext.Cache.Remove(cache_key + "_prior_timespan"); 
+                            }
+                            DateTime startime = (DateTime)HttpContext.Cache[cache_key];
+                            TimeSpan ts = (DateTime.Now - startime) + prior_ts;
+                            HttpContext.Cache.Insert(cache_key + "_prior_timespan", ts, null, DateTime.Now.AddMonths(6), System.Web.Caching.Cache.NoSlidingExpiration);
+                            HttpContext.Cache[cache_key + "_owner"] = User.Identity.Name + ": " + DateTime.Now.ToShortDateString() + " " + DateTime.Now.ToShortTimeString();
+                            usercontent = User.Identity.Name + ": " + DateTime.Now.ToShortDateString() + " " + DateTime.Now.ToShortTimeString();
+                            HttpContext.Cache.Remove(cache_key);
+                            UpdateMachineDowntime(ms_id, cid, (int)ts.TotalMinutes);
+                            if (ts.Hours + ts.Minutes > 0)
+                            {
+                                //result = ts.Hours.ToString() + ":" + ts.Minutes.ToString() + "/STOPPED";
+                                var stp_str = "/STOPPED"; 
+                                result = ts.ToString(@"hh\:mm") + stp_str;
+                            }
+                            else
+                            {
+                                result = "0:00/STOPPED";
+                            }
+
+                            UpdateTimerList(ms_id, false, cid);
+                        } catch (Exception ex)
+                        {
+                            result = "ERR"; 
+                        }
+                    }
+
+                    break;
+            }
+
+            if (usercontent.Length > 0)
+                usercontent = "owner " + usercontent; 
+
+            return Json(new Models.TimerPostModel() { TimerContent = result, UserContent = usercontent });
         }
 
         #region Helpers
@@ -411,41 +516,81 @@ namespace FlagBoard_mvc.Controllers
             return "0"; 
         }
 
-        private List<schedule> getSchedule()
+        private void addLocationCookie(string CID)
         {
-            if (HttpContext.Cache["MaintenanceSchedule"] != null)
-            {
-                try
-                {
-                    List<schedule> cachedrecs = (List<schedule>)HttpContext.Cache["MaintenanceSchdule"];
-                    if (cachedrecs.Count > 0)
-                        return cachedrecs;
+            if (CID.Trim().Length != 6)
+                return;
 
-                } catch (Exception ex)
-                {
+            HttpCookie cookie = new HttpCookie("maintenance_location");
+            cookie["CID"] = CID;
+            cookie.Expires = DateTime.Now.AddDays(21); 
 
-                }
-                
-            }                
-            Helpers.CtxService service = new Helpers.CtxService(null, model.CID);
-
-            return service.getSchedule();
+            Response.Cookies.Add(cookie); 
         }
 
-        private Models.MobileEditorModel getEditorModelObject(string CID, int MS_Id, int MFB_Id)
+        private List<schedule> getSchedule(int maint_code = 1)
+        {
+            //if (HttpContext.Cache["MaintenanceSchedule_" + model.CID] != null)
+            //{
+            //    try
+            //    {
+            //        List<schedule> cachedrecs = (List<schedule>)HttpContext.Cache["MaintenanceSchedule_" + model.CID];
+            //        if (cachedrecs.Count > 0)
+            //        {
+            //            if (maint_code == 1)
+            //            {
+            //                return (from x in cachedrecs orderby x.MS_Next_Main_Datetime ascending select x).ToList();
+            //            }
+            //            else
+            //            {
+            //                return (from x in cachedrecs select x).OrderBy(x => x.MS_WOCreate_Date).ToList();
+            //            }
+
+            //        }
+
+
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        Elmah.ErrorSignal.FromCurrentContext().Raise(ex);
+            //    }
+
+            //}
+            Helpers.CtxService service = new Helpers.CtxService(null, model.CID);
+
+            var recs = service.getSchedule();
+
+            //if (recs.Count > 0)
+            //    service.cache(recs, model.CID); 
+
+            return recs;
+        }
+
+        private Models.MobileEditorModel getEditorModelObject(string CID, int MS_Id, int MFB_Id, int MM_Id)
         {
             Models.MobileEditorModel model = new Models.MobileEditorModel();
             model.CID = CID; 
             model.inputs = getEditorInputs(CID, MFB_Id, MS_Id);
             model.hiddenInputs = new List<Helpers.InputObject>();
+
             Helpers.InputObject hidden1 = new Helpers.InputObject();
             hidden1.id = "CID";
             hidden1.value = CID;
             model.hiddenInputs.Add(hidden1);
+
             Helpers.InputObject hidden2 = new Helpers.InputObject();
             hidden2.id = "MS_Id";
             hidden2.value = MS_Id.ToString();
             model.hiddenInputs.Add(hidden2);
+
+            Helpers.InputObject hidden3 = new Helpers.InputObject();
+            hidden3.id = "MM_Id";
+            hidden3.value = MM_Id.ToString();
+            model.hiddenInputs.Add(hidden3); 
+
+            service = new Helpers.CtxService(null, model.CID);
+            model.machines = service.getMachines(MFB_Id).ToArray(); 
+
             return model;
         }
 
@@ -460,6 +605,19 @@ namespace FlagBoard_mvc.Controllers
             inputs.Add(getMTypesDropdown(CID));
 
             inputs.Add(getEmployeesDropdown(CID));
+
+            if (MS_Id == 0)
+            {
+                foreach (var item in inputs[inputs.Count - 1].input.options)
+                {
+                    if (item.text == ". .")
+                    {
+                        inputs[inputs.Count - 1].input.value = item.value;
+                        break;
+                    }
+                        
+                }
+            }
 
             inputs.Add(new Helpers.PageInput("default", "Unscheduled Reason", "MS_Unscheduled_Reason", "MS_Unscheduled_Reason", ""));
 
@@ -487,6 +645,10 @@ namespace FlagBoard_mvc.Controllers
             nextDate.function = "date";
             inputs.Add(nextDate);
 
+            Helpers.PageInput completed = new Helpers.PageInput("default", "Completed by", "MS_Main_Comp_Date", "MS_Main_Comp_Date", "false");
+            completed.function = "checkbox";
+            inputs.Add(completed);
+
             inputs.Add(getMaintCodeDropdown()); 
 
             Helpers.PageInput timeAlotted = new Helpers.PageInput("default", "Time Alloted", "MS_Maint_Time_Alotted", "MS_Maint_Time_Alotted", "0");
@@ -501,8 +663,8 @@ namespace FlagBoard_mvc.Controllers
             timeInterval.function = "number";
             inputs.Add(timeInterval);
 
-            Helpers.PageInput downtime = new Helpers.PageInput("default", "Total Machine Downtime", "MS_Total_Machine_Downtime", "MS_Total_Machine_Downtime", "0");
-            downtime.function = "number";
+            Helpers.PageInput downtime = new Helpers.PageInput("timer", "Total Machine Downtime", "MS_Total_Machine_Downtime", "MS_Total_Machine_Downtime", "0");
+            downtime.function = "timer";
             inputs.Add(downtime);
 
             Helpers.PageInput machineHours = new Helpers.PageInput("default", "Machine Hours", "MS_Machine_Hours", "MS_Machine_Hours", "0");
@@ -607,7 +769,7 @@ namespace FlagBoard_mvc.Controllers
             try
             {
                 Helpers.CtxService service = new Helpers.CtxService(null, CID);
-                List<int> fbs = service.getFlagBoards();
+                List<Models.pageInputs> fbs = service.getFlagBoardsInput();
 
                 if (fbs == null || fbs.Count == 0)
                 {
@@ -618,7 +780,7 @@ namespace FlagBoard_mvc.Controllers
 
                 foreach (var item in fbs)
                 {
-                    fbInput.input.options.Add(new Helpers.InputObject.option { text = "Flagboard # " + item, value = item.ToString() });
+                    fbInput.input.options.Add(new Helpers.InputObject.option { text = "FB " + item.value, value = item.key });
                 }
             }
             catch (Exception ex)
@@ -780,11 +942,13 @@ namespace FlagBoard_mvc.Controllers
                 record.MS_Main_Comp_Date = "";
                 record.MS_WOCreate_Timestamp = DateTime.Now.AddDays(record.MS_Frequency).ToShortDateString() + " " + DateTime.Now.AddDays(record.MS_Frequency).ToShortTimeString();
                 record.MS_WOClosed_Timestamp = "";
-                record.EMP_ID = (defaultEMPID > 0) ? defaultEMPID : record.EMP_ID;
+                record.EMP_ID = (record.EMP_ID != 0) ? record.EMP_ID : defaultEMPID;
 
                 int result = service.Add(record);
                 if (result == 0)
                     throw new Exception("Error editing scheduled maintenance record.");
+                else
+                    service.clearCache(); 
             } finally
             {
                 service.Dispose(); 
@@ -792,6 +956,235 @@ namespace FlagBoard_mvc.Controllers
             
         }
 
+        private void UpdateMachineDowntime(int ms_id, string cid, int downtime)
+        {
+            if (ms_id == 0)
+                return;
+
+            if (cid.Trim().Length != 6)
+                return;
+
+            if (downtime == 0)
+                return; 
+
+            CtxService service = new CtxService(null, cid); 
+
+            try
+            {
+                service.updateMachineDowntime(ms_id, downtime); 
+            } finally
+            {
+                service.Dispose(); 
+            }           
+        }
+
+        private void UpdateTimerList(int ms_id, bool value, string cid)
+        {
+            Dictionary<int, bool> to_cache = null;
+            try
+            {
+                if (HttpContext.Cache["active_timer_list_" + cid.ToString()] != null)
+                {
+                    Dictionary<int, bool> t_list = (Dictionary<int, bool>)HttpContext.Cache["active_timer_list_" + cid.ToString()];
+                    if (t_list.Count > 0)
+                    {
+                        if (t_list.ContainsKey(ms_id))
+                        {
+                            t_list[ms_id] = value;
+                        }
+                        else
+                        {
+                            t_list.Add(ms_id, value);
+                        }
+                    }
+                }
+                else
+                {
+                    to_cache = new Dictionary<int, bool>
+                        {
+                            { ms_id, value }
+                        };
+                }
+                
+                if (to_cache != null)
+                {
+                    if (HttpContext.Cache["active_timer_list_" + cid.ToString()] == null)
+                    {
+                        HttpContext.Cache.Insert("active_timer_list_" + cid.ToString(), to_cache, null, DateTime.Now.AddMonths(6), System.Web.Caching.Cache.NoSlidingExpiration);
+                    } else
+                    {
+                        HttpContext.Cache["active_timer_list_" + cid.ToString()] = to_cache; 
+                    }
+                    
+                }
+                    
+            }
+            catch (Exception ex)
+            {
+                Elmah.ErrorSignal.FromCurrentContext().Raise(ex);
+            }
+        }
+
+        public TimerStatus[] GetActiveTimers(string cid)
+        {
+            TimerStatus[] tlist = { }; 
+            try
+            {
+                if (HttpContext.Cache["active_timer_list_" + cid.ToString()] != null)
+                {
+                    Dictionary<int, bool> tdic = (Dictionary<int, bool>)HttpContext.Cache["active_timer_list_" + cid.ToString()];
+                    tlist = new TimerStatus[tdic.Count];
+                    int i = 0;
+                    foreach (var item in tdic)
+                    {
+                        tlist[i] = new TimerStatus { MS_Id = item.Key, value = item.Value };
+                        i++;
+                    }
+                }
+
+            } catch (Exception ex)
+            {
+                Elmah.ErrorSignal.FromCurrentContext().Raise(ex); 
+            }
+            
+            return tlist; 
+        }
+
+        private void UpdateCachedTimers(string cid)
+        {
+            if (HttpContext.Cache["MaintenanceSchedule_" + cid] != null)
+            {
+                try
+                {
+                    var cache_recs = (List<schedule>)HttpContext.Cache["MaintenanceSchedule_" + cid];
+
+                    foreach(schedule item in cache_recs)
+                    {
+                        var cache_key = "ms_timer_" + cid + "_" + item.MS_Id + "_prior_timespan";
+
+                        if (HttpContext.Cache[cache_key] != null)
+                        {
+                            var ts = (TimeSpan)HttpContext.Cache[cache_key];
+                            if (ts.TotalMinutes < item.MS_Total_Machine_Downtime)
+                            {
+                                //int hours = (int)item.MS_Total_Machine_Downtime / 60;
+                                int minutes = (int)item.MS_Total_Machine_Downtime / 60;
+                                TimeSpan nws = new TimeSpan(0, minutes, 0);
+                                HttpContext.Cache[cache_key] = nws; 
+                            }                          
+                        } else if (item.MS_Total_Machine_Downtime > 0)
+                        {
+                            int mins = (int)item.MS_Total_Machine_Downtime / 60;
+                            //int minutes = (int)item.MS_Total_Machine_Downtime % 60;
+                            var newts = new TimeSpan(0, mins, 0); 
+                            HttpContext.Cache.Insert(cache_key, newts, null, DateTime.Now.AddMonths(6), System.Web.Caching.Cache.NoSlidingExpiration);
+                            
+                        }
+
+                        if (HttpContext.Cache["ms_timer_" + cid + "_" + item.MS_Id] != null)
+                        {
+                            UpdateTimerList(item.MS_Id, true, cid);
+                        } else if (HttpContext.Cache[cache_key] != null)
+                        {
+                            UpdateTimerList(item.MS_Id, false, cid);
+                        }
+                        
+
+                    }
+                }  catch (Exception ex)
+                {
+                    Elmah.ErrorSignal.FromCurrentContext().Raise(ex); 
+                }             
+            }
+        }
+
+        private string getFBLabel(int id)
+        {
+            if (id == 0)
+                return "ALL"; 
+
+            string name = id.ToString();
+
+            if (Session["MFB_Name"] != null && Session["MFB_Name"].ToString().Length > 0)
+                name = Session["MFB_Name"].ToString();
+            else
+            {
+                var dbname = service.getFBName(id);
+
+                if (dbname.Length > 0)
+                {
+                    name = dbname;
+                    Session["MFB_Name"] = dbname; 
+                }
+            }      
+
+            return name;
+        }
+
+        private bool IsPrincipal()
+        {
+            var principal = ConfigurationManager.AppSettings["PRINCIPAL"];
+
+            if (principal == HttpContext.User.Identity.Name)
+                return true;
+
+            return false; 
+        }
+
+        private bool IsAdmin()
+        {
+            var authcookie = HttpContext.Request.Cookies[FormsAuthentication.FormsCookieName]; 
+            
+            if (authcookie != null)
+            {
+                var ticket = FormsAuthentication.Decrypt(authcookie.Value); 
+                if (ticket.Name.Length > 0)
+                {
+                    ticketname = ticket.Name; 
+                    string[] au = getAuthorizedUsers();
+
+                    foreach (var item in au)
+                    {
+                        var userid = item.Split('@');
+
+                        if (userid[0] == parseAuthTicketName(ticket.Name))
+                            return true; 
+                    }
+                }
+            }
+            return false; 
+        }
+
+        private string[] getAuthorizedUsers()
+        {
+
+            AprService srv = new AprService();
+
+            var cached_users = srv.getCachedAdminUserNames();
+
+            if (cached_users != null)
+                return cached_users;
+
+            var db_sers = srv.getAdminUserNames();
+
+            if (db_sers.Length > 0)
+                srv.CacheAdminUsernames(db_sers);
+
+            return db_sers; 
+        }
+
+        private string parseAuthTicketName(string tn)
+        {
+            if (tn.Length > 0)
+            {
+                var id = tn.Split('\\');
+                if (id.Length == 1)
+                    return id[0];
+                else if (id.Length > 1)
+                    return id[1]; 
+            }
+            return "";
+        }
         #endregion
     }
 

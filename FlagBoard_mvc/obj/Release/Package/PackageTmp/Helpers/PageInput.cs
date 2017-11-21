@@ -25,6 +25,9 @@ namespace FlagBoard_mvc.Helpers
                     InputType = "SELECT";
                     input.options = new List<InputObject.option>(); 
                     break;
+                case "TIMER":
+                    InputType = "TIMER"; 
+                    break;
                 default:
                     InputType = "DEFAULT";
                     break;

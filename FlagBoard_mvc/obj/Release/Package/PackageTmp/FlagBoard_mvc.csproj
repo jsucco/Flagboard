@@ -58,6 +58,10 @@
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Net.Http.Formatting, Version=5.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.WebApi.Client.5.2.3\lib\net45\System.Net.Http.Formatting.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Security" />
     <Reference Include="System.Web.DynamicData" />
@@ -66,6 +70,14 @@
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Web.Http, Version=5.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.WebApi.Core.5.2.3\lib\net45\System.Web.Http.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Web.Http.WebHost, Version=5.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.WebApi.WebHost.5.2.3\lib\net45\System.Web.Http.WebHost.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Web" />
     <Reference Include="System.Web.Extensions" />
@@ -175,18 +187,23 @@
     <Compile Include="App_Start\IdentityConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="App_Start\Startup.Auth.cs" />
+    <Compile Include="App_Start\WebApiConfig.cs" />
+    <Compile Include="Controllers\AccountController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\ManageController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Helpers\AprMangCache.cs" />
     <Compile Include="Helpers\AprService.cs" />
+    <Compile Include="Helpers\CtxCache.cs" />
     <Compile Include="Helpers\CtxService.cs" />
     <Compile Include="Helpers\dataCleaner.cs" />
     <Compile Include="Helpers\jqGrid.cs" />
     <Compile Include="Helpers\ManagerService.cs" />
     <Compile Include="Helpers\objectMapper.cs" />
     <Compile Include="Helpers\PageInput.cs" />
+    <Compile Include="Models\EF\EmailMaster.cs" />
     <Compile Include="Models\EF\AprManagerContext.cs" />
     <Compile Include="Models\EF\Corporate.cs" />
     <Compile Include="Models\EF\CtxContext.cs" />
@@ -209,10 +226,12 @@
     <Content Include="Content\Images\APR_Title_6.5.14.jpg" />
     <Content Include="Content\Images\chevron-left.jpg" />
     <Content Include="Content\Images\chevron-right.jpg" />
+    <Content Include="Content\Images\clock.gif" />
     <Content Include="Content\Index.css" />
     <Content Include="Content\jquery-wijmo.css" />
     <Content Include="Content\jquery.wijmo-pro.all.3.20141.34.min.css" />
     <Content Include="Content\select2.css" />
+    <Content Include="Content\Timers.css" />
     <Content Include="Content\ui.jqgrid.css" />
     <Content Include="favicon.ico" />
     <Content Include="fonts\glyphicons-halflings-regular.svg" />
@@ -220,6 +239,7 @@
     <Content Include="Content\Site.css" />
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
+    <None Include="Properties\PublishProfiles\coredemo3.pubxml" />
     <None Include="Properties\PublishProfiles\coredemo_testsite.pubxml" />
     <None Include="Properties\PublishProfiles\live_Site.pubxml" />
     <None Include="Scripts\jquery-1.10.2.intellisense.js" />
@@ -234,10 +254,13 @@
     <Content Include="Scripts\jquery.validate.min.js" />
     <Content Include="Scripts\jquery.validate.unobtrusive.js" />
     <Content Include="Scripts\jquery.validate.unobtrusive.min.js" />
+    <Content Include="Scripts\jquery.wijmo-open.all.3.20141.34.min.js" />
+    <Content Include="Scripts\jquery.wijmo-pro.all.3.20141.34.min.js" />
     <Content Include="Scripts\modernizr-2.6.2.js" />
     <Content Include="Scripts\respond.js" />
     <Content Include="Scripts\respond.min.js" />
     <Content Include="Scripts\select2.js" />
+    <Content Include="Scripts\wijmo.data.ajax.3.20141.34.js" />
     <Content Include="Scripts\_references.js" />
     <Content Include="Web.config">
       <SubType>Designer</SubType>
@@ -268,6 +291,9 @@
     <Content Include="fonts\glyphicons-halflings-regular.eot" />
     <Content Include="packages.config" />
     <Content Include="Scripts\jquery-1.10.2.min.map" />
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Service References\" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
