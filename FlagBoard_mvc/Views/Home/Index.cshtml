@@ -298,7 +298,9 @@
                     window.location.href= "/Home/MobileEditor?CID=" + CID + "&MSID=0&MFBID=" + grid.Selected_Flagboard;
                     return false;
                 }
+
                 $("#lblCompletedBy").text("Assigned To");
+                grid.LastSelectedMSID = 0; 
                 inputBox.InitializeNewRecord();
                 //$('#inputbox').wijdialog('open');
                 setTimeout(function() {
@@ -330,7 +332,12 @@
             if ($("#inputbox").is(":visible")) {
                 switch(action) {
                     case 'machine_downtime_start':
-                        inputBox.Timer(grid.LastSelectedMSID, 'START', false);
+                        if (grid.LastSelectedMSID == 0) { 
+                            inputBox.dispatch('add', true);
+                        } else { 
+                            inputBox.Timer(grid.LastSelectedMSID, 'START', false);
+                        }
+                        
                         break;
                     case 'machine_downtime_stop':
                         inputBox.Timer(grid.LastSelectedMSID, 'STOP', false);
@@ -607,6 +614,7 @@
         InputElements: $('.inputelement'),
         Selected_MSID: 0,
         method: "",
+        preventUpdate: false, 
         InitializeControls: function (MachinesArr, typesArr, EmployeeArr, fbArr) {
 
             $(".inputelement").each(function () {
@@ -690,7 +698,7 @@
             deferred.resolve(null);
             return deferred.promise();
         },
-        dispatch: function (method) {
+        dispatch: function (method, starttimer) {
 
             inputBox.stringifyInputs().then(function(InputString) {
                 if (InputString == null || InputString.length == 0) {
@@ -709,10 +717,18 @@
                     data: {Inputs: InputString, type: method, CID: CID },
                     success: function(data, text, jax) {
                         console.log("dispatch", data);
-                        if (data == "true")
+                        if (data.message == "true") {
+                            grid.LastSelectedMSID = new Number(data.id); 
                             grid.Refresh(true);
+                            if (starttimer == true) {
+                                setTimeout(function() { 
+                                    inputBox.Timer(grid.LastSelectedMSID, 'START', false);
+                                    inputBox.preventUpdate = true;
+                                }, 500);                             
+                            }
+                        }
                         else
-                            alert(data);
+                            alert(data.message);
                     },
                     error: function(data) {
                         alert(data);
@@ -1059,6 +1075,10 @@
         width: "810",
         buttons: {
             'UPDATE': function (event) {
+
+                if (inputBox.preventUpdate == true) 
+                    return; 
+
                 if (inputBox.method == "edit") {
                     var completed = $("#MS_Main_Comp_Date").prop('checked');
                     var EMPName = $("#EMP_First_Name").val();
@@ -1068,7 +1088,7 @@
                         return;
                     }
                 }
-                inputBox.dispatch(inputBox.method);
+                inputBox.dispatch(inputBox.method, false);
                 inputBox.method = "";
                 setTimeout(function () {
                     var Nextbuttonval = $('#NextButton').css("display")
@@ -1085,7 +1105,7 @@
 
                 if (@Html.Raw(Json.Encode(Model.canDelete)) == true) {
                     inputBox.method = "delete";
-                    inputBox.dispatch("delete");
+                    inputBox.dispatch("delete", false);
                 } else {
                     alert("delete functionality has been disabled");
                 }
@@ -1102,6 +1122,7 @@
                     }
                 },300);
                 $(this).dialog('close');
+                inputBox.preventUpdate = false; 
             }
         },
         open: function () {

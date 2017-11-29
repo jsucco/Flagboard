@@ -11,7 +11,8 @@ namespace FlagBoard_mvc.Helpers
     public class CtxService : CtxCache
     {
         public bool error = false;
-        public string errorMessage = ""; 
+        public string errorMessage = "";
+        public int rowKey = 0; 
 
         public CtxService(CtxContext _context = null, string CID = "")
         {
@@ -164,6 +165,7 @@ namespace FlagBoard_mvc.Helpers
 
             if (affected > 0)
             {
+                rowKey = newRecord.MS_Id;
                 AddWorkOrderToCache(newRecord.MS_Workorder, CID_); 
             }
 

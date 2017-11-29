@@ -40,7 +40,7 @@ by editing this MSBuild file. In order to learn more about this please visit htt
       <publishTime>03/02/2015 08:32:26</publishTime>
     </File>
     <File Include="bin/FlagBoard_mvc.dll">
-      <publishTime>11/21/2017 14:39:29</publishTime>
+      <publishTime>11/28/2017 14:26:11</publishTime>
     </File>
     <File Include="bin/Microsoft.AspNet.Identity.Core.dll">
       <publishTime>04/03/2015 17:07:22</publishTime>
@@ -202,7 +202,7 @@ by editing this MSBuild file. In order to learn more about this please visit htt
       <publishTime>06/06/2017 13:28:14</publishTime>
     </File>
     <File Include="Controllers/HomeController.cs">
-      <publishTime>11/20/2017 14:52:46</publishTime>
+      <publishTime>11/28/2017 13:51:25</publishTime>
     </File>
     <File Include="Controllers/ManageController.cs">
       <publishTime>11/21/2017 12:33:19</publishTime>
@@ -244,7 +244,7 @@ by editing this MSBuild file. In order to learn more about this please visit htt
       <publishTime>10/11/2017 13:55:39</publishTime>
     </File>
     <File Include="Helpers/CtxService.cs">
-      <publishTime>11/02/2017 16:06:53</publishTime>
+      <publishTime>11/28/2017 13:25:46</publishTime>
     </File>
     <File Include="Helpers/dataCleaner.cs">
       <publishTime>03/22/2017 18:34:21</publishTime>
@@ -427,7 +427,7 @@ by editing this MSBuild file. In order to learn more about this please visit htt
       <publishTime>03/06/2017 18:58:16</publishTime>
     </File>
     <File Include="Views/Home/Index.cshtml">
-      <publishTime>11/20/2017 14:35:35</publishTime>
+      <publishTime>11/28/2017 16:21:24</publishTime>
     </File>
     <File Include="Views/Home/MobileEditor.cshtml">
       <publishTime>11/21/2017 14:50:57</publishTime>
@@ -457,7 +457,7 @@ by editing this MSBuild file. In order to learn more about this please visit htt
       <publishTime>02/04/2017 14:53:40</publishTime>
     </File>
     <File Include="Web.config">
-      <publishTime>11/21/2017 16:41:10</publishTime>
+      <publishTime>11/28/2017 16:45:31</publishTime>
     </File>
     <File Include="Web.Debug.config">
       <publishTime>02/04/2017 14:53:40</publishTime>

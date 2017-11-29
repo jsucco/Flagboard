@@ -17,7 +17,7 @@ namespace FlagBoard_mvc.Controllers
 {
     public class HomeController : Controller
     {
-        private string CIDTest = "000485";
+        private string CIDTest = "000590";
         private string debugMode = ConfigurationManager.AppSettings["debugMode"];
         private IndexViewModel model = new IndexViewModel();
         private Helpers.CtxService service;
@@ -299,7 +299,9 @@ namespace FlagBoard_mvc.Controllers
         {
             System.Web.Script.Serialization.JavaScriptSerializer jser = new System.Web.Script.Serialization.JavaScriptSerializer();
             Helpers.CtxService service = new Helpers.CtxService(null, CID); 
-            string userMessage = ""; 
+            string userMessage = "";
+            int msid = 0; 
+
             if (inputs.Length == 0)
                 return Json("Input Box Objects cannot be empty.", JsonRequestBehavior.AllowGet); 
             
@@ -331,7 +333,8 @@ namespace FlagBoard_mvc.Controllers
                         service.Dispose(); 
                         if (rowsaff == 0)
                             throw new Exception("unknown error adding rows. ");
-                        userMessage = "true"; 
+                        userMessage = "true";
+                        msid = service.rowKey; 
                         break;
                     case "delete":
                         service.delete(record.MS_Id);
@@ -348,7 +351,7 @@ namespace FlagBoard_mvc.Controllers
                 service.clearCache();
             }
 
-            return Json(userMessage, JsonRequestBehavior.AllowGet); 
+            return Json(new { message = userMessage, id = msid }, JsonRequestBehavior.AllowGet); 
         }
 
         [HttpPost]
